@@ -24,10 +24,12 @@ const isTouchDevice = navigator.maxTouchPoints > 0 && window.matchMedia('(pointe
 import { useGameStore } from '../../../stores/game';
 import { useRoute } from 'vue-router';
 import { usePlayerStore } from '../../../stores/player';
-import { useRoomStore } from '../../../stores/room';
+import { useRoomStore } from "../../../stores/room";
+import { useSupabaseRoomStore, getBroker } from "../../../stores/supabaseRoom";
 
 const player = usePlayerStore()
 const room = useRoomStore()
+const sbRoom = useSupabaseRoomStore()
 const route = useRoute()
 const gameStore = useGameStore()
 const emit = defineEmits<{
@@ -110,9 +112,13 @@ onMounted(async () => {
       }
     }
   }, {
-    playerId: player.playerId,
-    isHost: !!room.isHost,
-    socket: room.serverConnection
+    // Prefer the Supabase lobby when it holds an active room; otherwise fall
+    // back to the legacy room-server connection.
+    playerId: sbRoom.room ? sbRoom.playerId : player.playerId,
+    isHost: sbRoom.room ? sbRoom.isHost : !!room.isHost,
+    socket: room.serverConnection,
+    broker: getBroker(),
+    roomId: sbRoom.room?.id ?? null
   })
 
   if (isTouchDevice) {

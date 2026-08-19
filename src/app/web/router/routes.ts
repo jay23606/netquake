@@ -15,6 +15,8 @@ import Room from '../components/page/Room/Room.vue'
 import SharewareLicense from '../components/page/SharewareLicense.vue'
 import Frontend from '../components/layout/Layout.vue'
 import RoomGameLauncher from '../components/page/Room/RoomGameLauncher.vue'
+import SupabaseLobby from '../components/page/SupabaseMp/SupabaseLobby.vue'
+import SupabaseGameLauncher from '../components/page/SupabaseMp/SupabaseGameLauncher.vue'
 
 const routes: RouteRecordRaw[] = [
   { 
@@ -28,7 +30,8 @@ const routes: RouteRecordRaw[] = [
       { name: 'room', path: '/room/:id', component: Room },
       { name: 'setup', path: '/setup', component: Setup },
       { name: 'faq', path: '/faq', component: Faq },
-      { name: 'slicnse', path: '/slicnse', component: SharewareLicense }
+      { name: "slicnse", path: "/slicnse", component: SharewareLicense },
+      { name: "sb-multiplayer", path: "/mp", component: SupabaseLobby }
     ]
   },
   { 
@@ -37,8 +40,14 @@ const routes: RouteRecordRaw[] = [
     component: RoomGameLauncher,
     props: true  
   },
+  {
+    name: "sb-quake",
+    path: "/mp/quake",
+    component: SupabaseGameLauncher,
+    props: true
+  },
   { 
-    name: 'quake', 
+    name: "quake", 
     path: '/quake', 
     component: GameLauncher,
     props: true 
