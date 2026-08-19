@@ -5,6 +5,8 @@ for the lobby, and **peer-to-peer WebRTC** for multiplayer.
 
 **▶ Play: https://jay23606.github.io/netquake/**
 
+**Multiplayer lobby: https://jay23606.github.io/netquake/#/mp**
+
 Episode 1 plays immediately — the shareware data ships with the site. Own
 Quake? Upload your own `pak1.pak` in Setup to unlock all four episodes; it is
 stored locally in IndexedDB and never uploaded anywhere.
@@ -16,11 +18,18 @@ stored locally in IndexedDB and never uploaded anywhere.
 | Single player (shareware episode 1) | working |
 | Single player (full game, your own `pak1.pak`) | working |
 | Static hosting on GitHub Pages | working |
-| Supabase schema + signaling broker | written, not yet wired |
-| Peer-to-peer multiplayer | **not working yet** |
+| Supabase schema, auth and lobby | working |
+| Live room list (Realtime) | working |
+| Peer-to-peer game connection | wired, not yet verified |
 
-Multiplayer is the current work in progress: `SupabaseBroker` is implemented
-but `webrtc.ts` still constructs the legacy `RoomBroker`.
+The lobby is confirmed against the live database: anonymous sign-in, room
+creation, joining and the Realtime room list all work. What has not been
+proven is the peer connection itself -- no SDP offer has been observed crossing
+a Realtime channel and no DataChannel has been seen to open. Two browsers are
+needed to settle that.
+
+Note that STUN alone will not connect peers behind symmetric NAT; a TURN relay
+goes in `VITE_ICE_SERVERS` if that turns out to matter.
 
 ## Architecture
 
