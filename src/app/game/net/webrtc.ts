@@ -56,6 +56,14 @@ const state: WebRTCState = {
 	webRtcDriver: null
 }
 
+
+// The frontend supplies an already-connected broker for Supabase-hosted rooms
+// (SupabaseBroker.connect is async, so it is awaited in the app). The legacy
+// room-server path builds one over the WebSocket the app injected instead.
+const roomBroker = (): IWebRTCBroker =>
+	sys.state.initArgs.broker
+		?? new RoomBroker(createSignaling(sys.state.initArgs.socket), sys.state.initArgs.playerId)
+
 const createSignaling = (ws: WebSocket): Signaling => {
 	let eventToMessageHandler: (event: MessageEvent) => void
 	return { 
@@ -135,10 +143,10 @@ export const init = () => {
 
 export const listen = () => {
 	state.currentRole = 'server'
-	if (sys.state.initArgs.isHost && sys.state.initArgs.socket) {
-		// For now require injection of the args from the frontend.
-		initBroker(
-			new RoomBroker(createSignaling(sys.state.initArgs.socket), sys.state.initArgs.playerId))
+	if (sys.state.initArgs.isHost && (sys.state.initArgs.broker || sys.state.initArgs.socket)) {
+		// Args are injected by the frontend: either a connected Supabase broker
+		// or the legacy room-server WebSocket.
+		initBroker(roomBroker())
 	} else {
 		const wsHost = `${cvr.broker.string}/FTE-Quake/${net.cvr.hostname.string}`
 		websocket = new WebSocket(wsHost, ['rtc_host'])
@@ -237,7 +245,7 @@ const initBroker = (broker: IWebRTCBroker) => {
 export const connect = async (host: string): Promise<QConnectStatus> =>
 {
 	const isRoom = host === 'rtc://netquake.io/room'
-	if (isRoom && !sys.state.initArgs.socket) {
+	if (isRoom && !sys.state.initArgs.broker && !sys.state.initArgs.socket) {
 		print('Can only join a room game from the room page.')
 		return 'failed'
 	}
@@ -256,7 +264,7 @@ export const connect = async (host: string): Promise<QConnectStatus> =>
 	if (!isRoom) sock.protocol = 'nqnetchan'
 
 	if (isRoom) {
-		initBroker(new RoomBroker(createSignaling(sys.state.initArgs.socket), sys.state.initArgs.playerId))
+		initBroker(roomBroker())
 	} else {
 		const { brokerUrl, resource } = parseRtcUri(host)
 		const broker = brokerUrl || cvr.broker.string

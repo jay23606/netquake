@@ -1,3 +1,4 @@
+import type { IWebRTCBroker } from '../../shared/webrtc/IWebRTCBroker'
 import * as com from '../../engine/com'
 import * as con from '../../engine/console'
 import * as host from '../../engine/host'
@@ -33,6 +34,11 @@ export type InitArgs = {
 	playerId: string | null
 	isHost: boolean
 	socket: WebSocket | null
+	// A signaling broker the frontend has already connected (the Supabase path).
+	// Mirrors `socket`: the async connect happens in the app so the engine stays
+	// synchronous. When set, it takes precedence over `socket`.
+	broker?: IWebRTCBroker | null
+	roomId?: string | null
 }
 
 export type SysState = {
