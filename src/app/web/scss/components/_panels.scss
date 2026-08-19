@@ -1,0 +1,30 @@
+@layer components {
+  .panel {
+    @apply flex flex-col rounded;
+    background-color: $color-surface;
+    border: 1px solid $color-border;
+  }
+  .panel-header {
+    @apply px-4 py-3 font-semibold;
+    color: $color-text;
+    border-bottom: 1px solid $color-border;
+  }
+  .panel-title { @apply font-semibold; }
+  .panel-body  { @apply flex-1 p-4 overflow-y-auto; }
+  .panel-footer {
+    @apply px-4 py-3;
+    border-top: 1px solid $color-border;
+    &:empty { display: none; }
+  }
+
+  .card {
+    @apply rounded;
+    background-color: $color-surface;
+    border: 1px solid $color-border;
+  }
+  .card-header {
+    @apply px-4 py-3;
+    border-bottom: 1px solid $color-border;
+  }
+  .card-body { @apply p-4; }
+}

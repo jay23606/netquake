@@ -1,0 +1,59 @@
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center
+         px-5 py-2 text-sm
+         font-bold uppercase tracking-wide
+         border-0 cursor-pointer
+         transition-all duration-150
+         select-none whitespace-nowrap;
+
+    background-color: $color-btn;
+    color: #fff;
+
+    &:hover  { background-color: $color-btn-hover; }
+    &:focus  { background-color: $color-btn-dark; outline: none; }
+    &:disabled {
+      @apply opacity-40 cursor-not-allowed pointer-events-none;
+    }
+  }
+  
+  .btn-primary {
+    background-color: $color-primary;
+    border-color: $color-primary;
+    color: $color-text-dark;
+    &:hover { filter: brightness(1.1); }
+  }
+  .btn-link {
+    @apply bg-transparent border-transparent underline-offset-2;
+    color: $color-primary;
+    &:hover { text-decoration: underline; background: transparent; }
+  }
+  .btn-danger {
+    background-color: $color-danger;
+    border-color: $color-danger;
+    color: $color-text;
+    &:hover { filter: brightness(1.1); }
+  }
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid $color-border-input;
+    color: $color-text-muted;
+    &:hover { color: $color-text; border-color: $color-text-muted; background: transparent; }
+  }
+  .btn-sm     { @apply px-3 py-1 text-xs; }
+  .btn-lg     { @apply px-9 py-3.5 text-base; }
+  .btn-action { @apply w-7 h-7 p-0 flex items-center justify-center normal-case tracking-normal; }
+  .btn-clear {
+    @apply bg-transparent border-transparent;
+    color: $color-text-muted;
+    &:hover { color: $color-text; background: transparent; }
+  }
+  .btn-large {
+    @apply h-12 text-2xl w-full border-none;
+    background-color: $color-btn;
+    color: $color-text;
+    &:hover { background-color: $color-btn-hover; }
+  }
+  .full-width { @apply w-full; }
+  .solid { background-color: $color-btn; }
+}

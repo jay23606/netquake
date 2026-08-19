@@ -1,0 +1,17 @@
+@layer components {
+  .text-error { color: $color-error; }
+  .text-small { @apply text-sm; }
+  .h5 { @apply text-base font-semibold; color: $color-primary; }
+  .h6 { @apply text-sm font-semibold; }
+  .divider {
+    @apply border-t my-4;
+    border-color: $color-border;
+  }
+  .float-right { float: right; }
+
+  /* Spacing shims used in pug templates */
+  .mt-2 { margin-top: 0.5rem; }
+  .mr-1 { margin-right: 0.25rem; }
+  .mr-2 { margin-right: 0.5rem; }
+  .mb-2 { margin-bottom: 0.5rem; }
+}

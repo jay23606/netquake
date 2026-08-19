@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "allowJs": false
+  },
+  "include": [
+    "src/app/**/*.ts",
+    "src/app/**/*.vue",
+    "src/app/**/*.d.ts",
+    "src/engine/**/*.ts",
+    "src/shared/**/*.ts",
+    "src/env.d.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

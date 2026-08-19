@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": true,
+    "module": "CommonJS",
+    "lib": ["ESNext", "DOM"],
+    "types": ["node"],
+    "skipLibCheck": true,
+    "allowJs": false,
+    "rootDir": "./src",
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/engine/**/*.ts",
+    "src/server/**/*.ts",
+    "src/shared/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

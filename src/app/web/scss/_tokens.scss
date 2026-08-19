@@ -1,0 +1,107 @@
+// =============================================================
+// Design tokens — single source of truth for component styles
+// =============================================================
+
+
+// -------------------------------------------------------------
+// Palette — raw seed colors from mockup design
+// -------------------------------------------------------------
+
+$palette-body:    #1a1a1a;  // page background
+$palette-surface: #242424;  // panel / card background
+$palette-border:  #333333;  // borders and dividers
+$palette-muted:   #666666;  // muted / secondary text
+$palette-text:    #cccccc;  // primary body text
+$palette-bright:  #ffffff;  // headings / high-contrast text
+$palette-red:     #e03020;  // primary CTA / emphasis
+$palette-yellow:  #f0b800;  // accent / highlight
+
+
+// -------------------------------------------------------------
+// Derived tokens — computed from the palette above
+// -------------------------------------------------------------
+
+// Surfaces
+$color-body:     $palette-body;
+$color-surface:  $palette-surface;
+$color-card:     $palette-surface;
+$color-textarea: lighten($palette-surface, 3%);
+
+// Form fields
+$color-input:       $palette-surface;
+$color-input-hover: lighten($palette-surface, 5%);
+$color-input-dark:  $palette-border;
+
+// Buttons (from red palette)
+$color-btn:       $palette-red;
+$color-btn-hover: lighten($palette-red, 6%);
+$color-btn-dark:  darken($palette-red, 8%);
+
+// Borders
+$color-border:       $palette-border;
+$color-border-input: $palette-border;
+
+// Text
+$color-text:       $palette-text;
+$color-text-muted: $palette-muted;
+$color-text-dark:  #000000;  // text on light/primary backgrounds
+
+// Brand & feedback
+$color-primary: $palette-yellow;
+$color-danger:  $palette-red;
+$color-error:   lighten($palette-red, 20%);
+
+// Overlays
+$overlay-modal:        rgba(0, 0, 0, 0.7);
+$overlay-row-hover:    rgba(255, 255, 255, 0.04);
+$overlay-row-active:   rgba($palette-red, 0.12);
+$overlay-border-faint: rgba($palette-border, 0.5);
+
+
+// -------------------------------------------------------------
+// Typography scale
+// -------------------------------------------------------------
+
+$font-2xs:  11px;  // micro labels: section tags, table headers, badges
+$font-xs:   12px;  // sub-text: location line, inline code, unit suffixes
+$font-sm:   13px;  // secondary text: meta lines, action links, nav links
+$font-base: 15px;  // primary content: row data, player counts, ping values
+$font-md:   16px;  // card and step titles
+$font-lg:   18px;  // site logo
+
+// Font weights
+$fw-semibold:  600;  // nav links, map IDs, medium emphasis
+$fw-bold:      700;  // labels, action buttons, most UI text
+$fw-extrabold: 800;  // card titles, player counts, step titles
+$fw-black:     900;  // logo, page headings
+
+
+// -------------------------------------------------------------
+// Letter spacing
+// -------------------------------------------------------------
+
+$tracking-links:  0.06em;  // nav links, action buttons, join labels
+$tracking-labels: 0.10em;  // table headers, step numbers, section tags
+$tracking-caps:   0.12em;  // allcaps section labels, logo
+
+
+// -------------------------------------------------------------
+// Spacing scale
+// -------------------------------------------------------------
+
+$gap-1:  4px;   // hairlmajoine offset: icon gap, meta top margin
+$gap-2:  8px;   // compact: small internal gaps
+$gap-3:  12px;  // card interior: between label and title
+$gap-4:  16px;  // standard: block margins, card section spacing
+$gap-6:  24px;  // medium: discord wrapper, footer gaps
+$gap-8:  32px;  // section: inner padding, page header margin
+$gap-12: 48px;  // page-level: between r sections
+
+
+// -------------------------------------------------------------
+// Reusable shorthands
+// -------------------------------------------------------------
+
+$border-subtle:    1px solid $palette-border;
+$transition-color: color 0.15s;
+$transition-bg:    background 0.15s;

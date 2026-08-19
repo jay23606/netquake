@@ -1,0 +1,27 @@
+@layer components {
+  .loading {
+    @apply relative pointer-events-none;
+    &::after {
+      content: '';
+      @apply absolute border-2 rounded-full animate-spin;
+      border-color: $color-border-input;
+      border-top-color: $color-primary;
+      width: 1.2rem;
+      height: 1.2rem;
+      top: 50%;
+      left: 50%;
+      margin-top: -0.6rem;
+      margin-left: -0.6rem;
+    }
+  }
+  .loading-lg {
+    min-height: 4rem;
+    &::after {
+      width: 2.4rem;
+      height: 2.4rem;
+      margin-top: -1.2rem;
+      margin-left: -1.2rem;
+      border-width: 4px;
+    }
+  }
+}

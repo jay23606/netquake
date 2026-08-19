@@ -1,0 +1,20 @@
+{
+  "entries": ["assembly/index.ts"],
+  "targets": {
+    "release": {
+      "outFile": "build/sim.wasm",
+      "textFile": "build/sim.wat",
+      "optimizeLevel": 3,
+      "shrinkLevel": 0,
+      "runtime": "incremental"
+    },
+    "debug": {
+      "outFile": "build/sim.debug.wasm",
+      "debug": true,
+      "runtime": "incremental"
+    }
+  },
+  "options": {
+    "exportRuntime": true
+  }
+}

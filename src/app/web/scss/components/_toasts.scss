@@ -1,0 +1,79 @@
+@import '../tokens';
+
+// Override vue-toastification to match the app design language
+.Vue-Toastification__container {
+  font-family: 'Albert Sans', sans-serif;
+}
+
+.Vue-Toastification__toast {
+  border-radius: 0;
+  border: $border-subtle;
+  padding: 12px 16px;
+  min-height: 0;
+  font-family: inherit;
+  font-size: $font-sm;
+  font-weight: $fw-bold;
+  letter-spacing: $tracking-links;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  cursor: default;
+
+  &--default,
+  &--info {
+    background: $palette-surface;
+    color: $palette-text;
+    border-color: $palette-border;
+  }
+
+  &--success {
+    background: $palette-surface;
+    color: $palette-text;
+    border-color: #2e6b2e;
+  }
+
+  &--warning {
+    background: $palette-surface;
+    color: $palette-text;
+    border-color: darken($palette-yellow, 20%);
+  }
+
+  &--error {
+    background: $palette-surface;
+    color: $palette-text;
+    border-color: $palette-red;
+  }
+}
+
+.Vue-Toastification__toast-body {
+  font-size: $font-sm;
+  font-weight: $fw-semibold;
+  line-height: 1.5;
+  padding: 0;
+}
+
+.Vue-Toastification__close-button {
+  color: $palette-muted;
+  opacity: 1;
+  font-weight: $fw-bold;
+  align-self: center;
+  padding: 0 0 0 12px;
+  transition: $transition-color;
+  &:hover { color: $palette-bright; }
+}
+
+.Vue-Toastification__progress-bar {
+  height: 3px;
+  opacity: 1;
+
+  .Vue-Toastification__toast--default &,
+  .Vue-Toastification__toast--info & { background: $palette-muted; }
+  .Vue-Toastification__toast--success & { background: #4a9e4a; }
+  .Vue-Toastification__toast--warning & { background: $palette-yellow; }
+  .Vue-Toastification__toast--error & { background: $palette-red; }
+}
+
+.Vue-Toastification__icon {
+  &.Vue-Toastification__toast--info    { color: $palette-muted; }
+  &.Vue-Toastification__toast--success { color: #4a9e4a; }
+  &.Vue-Toastification__toast--warning { color: $palette-yellow; }
+  &.Vue-Toastification__toast--error   { color: $palette-red; }
+}

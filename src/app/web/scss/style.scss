@@ -1,0 +1,37 @@
+// Variables & design tokens
+@import 'colors.scss';
+@import 'tokens';
+
+// Tailwind directives
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// Base / reset
+@layer base {
+  body {
+    background-color: $palette-body;
+    color: $palette-text;
+    font-family: 'Albert Sans', sans-serif;
+  }
+  a {
+    cursor: pointer;
+    color: $color-primary;
+    &:hover { color: lighten($color-primary, 10%); }
+  }
+  h1, h2, h3, h4, h5, h6 { color: $palette-bright; }
+  .q-gold { color: $palette-yellow; }
+  .q-brown { color: #b08050; }
+}
+
+// Component layer partials
+@import 'components/buttons';
+@import 'components/forms';
+@import 'components/panels';
+@import 'components/modals';
+@import 'components/nav';
+@import 'components/table';
+@import 'components/loading';
+@import 'components/grid';
+@import 'components/utilities';
+@import 'components/toasts';

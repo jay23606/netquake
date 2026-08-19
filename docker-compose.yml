@@ -1,0 +1,20 @@
+services:
+  quake-server:
+    image: public.ecr.aws/v9s4j9b0/webquake-server:webrtc
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.server
+    restart: always
+    ports:
+      - "26003:26003/tcp"
+    volumes:
+      - "C:/source/netquake.io/id1:/usr/app/id1"
+      - "C:/source/netquake.io/crx:/usr/app/crx"
+    environment:
+      STARTUP_CFG: |
+        web_connect_url sv.netquake.io/hw
+        web_location Ohio
+        deathmatch 3
+        maxplayers 16
+    
+    command: ["-port", "26003", "+map", "dm2", "-maxplayers", "16", "-webrtc"]

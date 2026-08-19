@@ -1,0 +1,30 @@
+
+$primary-color: #fc3;
+$secondary-color: #a71010;
+
+$light-color: #fff;
+$dark-color: #48587b;
+
+$old-bg-secondary: rgb(123, 105, 72);
+
+$bg-secondary: #48587b;
+
+$border-color: lighten($bg-secondary, 25%);
+$border-color-dark: darken($border-color, 10%);
+$border-color-light: lighten($border-color, 8%);
+
+$bg-color: darken($dark-color, 75%);
+$bg-color-dark: $dark-color;
+$bg-color-light: $bg-color;
+
+$body-bg: #393939;
+$body-font-color: darken($light-color, 5%);
+$body-font-color-subdued: darken($body-font-color, 30%);
+
+$bg-color: darken($dark-color, 75%);
+$bg-color-dark: $dark-color;
+$bg-color-light: darken($body-bg, 5%);;
+
+$link-color: $primary-color;
+$link-color-dark: darken($link-color, 10%);
+$link-color-light: lighten($link-color, 10%);

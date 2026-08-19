@@ -1,0 +1,20 @@
+@layer components {
+  .table {
+    @apply w-full text-sm;
+    color: $color-text;
+    thead {
+      border-bottom: 1px solid $color-border-input;
+      color: $color-text-muted;
+    }
+    th { @apply px-3 py-2 text-left font-medium; }
+    td {
+      @apply px-3 py-2;
+      border-bottom: 1px solid $overlay-border-faint;
+    }
+    &.table-hover tbody tr:hover {
+      background: $overlay-row-hover;
+      cursor: pointer;
+    }
+    tbody tr.active { background: $overlay-row-active; }
+  }
+}

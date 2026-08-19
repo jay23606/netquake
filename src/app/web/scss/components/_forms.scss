@@ -1,0 +1,29 @@
+@layer components {
+  .form-input {
+    @apply w-full rounded px-3 py-2 focus:outline-none;
+    background-color: $color-input;
+    border: 1px solid $color-border-input;
+    color: $color-text;
+    &::placeholder { color: $color-text-muted; }
+    &:focus { border-color: $color-primary; }
+  }
+  textarea.form-input {
+    background-color: $color-textarea;
+  }
+  .form-select {
+    @apply w-full rounded px-3 py-2 focus:outline-none appearance-none;
+    background-color: $color-input;
+    border: 1px solid $color-border-input;
+    color: $color-text;
+    background-image: url("data:image/svg+xml;charset=utf8,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%204%205'%3E%3Cpath%20fill='%23667189'%20d='M2%200L0%202h4zm0%205L0%203h4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    background-size: 0.4rem 0.5rem;
+    padding-right: 1.5rem;
+    &:focus { border-color: $color-primary; }
+  }
+  .select-sm       { @apply text-sm py-0.5 px-2; }
+  .form-label      { @apply block text-sm mb-1; color: $color-text-muted; }
+  .form-group      { @apply mb-4; }
+  .form-input-hint { @apply text-sm mt-1; color: $color-text-muted; }
+}

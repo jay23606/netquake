@@ -1,0 +1,64 @@
+@layer components {
+  /* Shared site logo */
+  .site-logo {
+    font-size: $font-lg;
+    font-weight: $fw-black;
+    letter-spacing: $tracking-caps;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: $color-text-muted;
+    transition: $transition-color;
+    em { color: $palette-red; font-style: normal; }
+    &:hover { color: $palette-bright; }
+  }
+
+  /* Shared nav / footer link list */
+  .site-links {
+    a {
+      font-size: $font-sm;
+      font-weight: $fw-semibold;
+      color: $color-text-muted;
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: $tracking-links;
+      transition: $transition-color;
+      &:hover, &.router-link-active { color: $palette-bright; }
+    }
+  }
+
+  /* Tabs */
+  .tab {
+    @apply flex list-none border-b mb-4 p-0 m-0;
+    border-color: $color-border;
+  }
+  .tab-item {
+    @apply mr-1;
+    &.active a {
+      border-bottom: 2px solid $color-primary;
+      color: $color-primary;
+    }
+    a {
+      @apply block px-4 py-2;
+      color: $color-text-muted;
+      &:hover { color: $color-text; text-decoration: none; }
+    }
+  }
+
+  /* Accordion */
+  .accordion {
+    border-bottom: $border-subtle;
+    input[type="radio"] {
+      display: none;
+      &:checked ~ .accordion-body { display: block; }
+    }
+  }
+  .accordion-header {
+    @apply flex items-center gap-2 px-2 py-3 cursor-pointer font-medium;
+    &:hover { color: $color-primary; }
+  }
+  .accordion-body {
+    display: none;
+    @apply px-4 pb-3;
+    color: $color-text-muted;
+  }
+}

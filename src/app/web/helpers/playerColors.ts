@@ -1,0 +1,18 @@
+export const playerColors = [
+    '#FFFFFF',
+    '#be9558',
+    '#b8b8ed',
+    '#8f8f24',
+    '#ab0505',
+    '#d0ab24',
+    '#ffa287',
+    '#ffbe9c',
+    '#c38fa2',
+    '#c38fa2',
+    '#e2c3ab',
+    '#80a28f',
+    '#f8d624',
+    '#8080ff',
+    '#8080ff',
+    '#8080ff',
+  ];
