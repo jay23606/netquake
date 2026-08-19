@@ -385,6 +385,61 @@ export const init = async (argv: string) =>
 	for (i = 0; i < eventNames.length; ++i){
 		window[eventNames[i] as any] = events[eventNames[i]] as any; // @ts-ignore
   }
+	// requestAnimationFrame stops in hidden tabs. For a listen-server host that
+	// freezes the server simulation, so every peer connected to it times out and
+	// drops -- the game dies as soon as the host's window goes behind another.
+	// Worker timers keep firing when the page is hidden, so the frame pump moves
+	// to one for as long as that lasts, at a reduced rate: ample for NetQuake's
+	// ~20Hz snapshots without doing full-rate render work nobody can see.
+	const HIDDEN_TICK_MS = 33
+	let tickWorker: Worker | null = null
+	let pumpMode: 'raf' | 'worker' = 'raf'
+	let frameInFlight = false
+
+	const ensureTickWorker = (): Worker | null => {
+		if (tickWorker) return tickWorker
+		try {
+			const src = 'let i=null;onmessage=(e)=>{clearInterval(i);i=null;'
+				+ 'if(!e.data.stop){i=setInterval(()=>postMessage(0),e.data.ms)}}'
+			const url = URL.createObjectURL(new Blob([src], { type: 'application/javascript' }))
+			tickWorker = new Worker(url)
+			URL.revokeObjectURL(url)
+			// Unlike rAF this fires on a fixed interval regardless of how long the
+			// previous frame took, so overlapping entry has to be refused.
+			tickWorker.onmessage = () => {
+				if (document.hidden && !frameInFlight) void gameLoop(performance.now())
+			}
+		} catch {
+			tickWorker = null // no worker (CSP, old browser) -> setTimeout fallback
+		}
+		return tickWorker
+	}
+
+	const scheduleFrame = () => {
+		if (document.hidden) {
+			const w = ensureTickWorker()
+			if (w) {
+				if (pumpMode !== 'worker') {
+					pumpMode = 'worker'
+					w.postMessage({ ms: HIDDEN_TICK_MS })
+				}
+				return // the worker's tick drives the next frame from here
+			}
+			setTimeout(() => void gameLoop(performance.now()), HIDDEN_TICK_MS)
+			return
+		}
+		if (pumpMode === 'worker') {
+			pumpMode = 'raf'
+			tickWorker?.postMessage({ stop: true })
+		}
+		requestAnimationFrame(gameLoop)
+	}
+
+	// Resume immediately on becoming visible rather than waiting out a worker tick.
+	document.addEventListener('visibilitychange', () => {
+		if (!document.hidden && pumpMode === 'worker' && !frameInFlight) scheduleFrame()
+	})
+
 	let rafLastTime = 0
 	const gameLoop = async (timestamp: number) => {
 		// Skip frames that arrive before the maxfps interval has elapsed; 0 = uncapped
@@ -392,11 +447,12 @@ export const init = async (argv: string) =>
 		if (cl.cvr.maxfps.value > 0) {
 			const minInterval = 1000 / cl.cvr.maxfps.value
 			if (timestamp - rafLastTime < minInterval - 1) {
-				requestAnimationFrame(gameLoop)
+				scheduleFrame()
 				return
 			}
 		}
 		rafLastTime = timestamp
+		frameInFlight = true
 
 		try{
 			await host.frame();
@@ -418,6 +474,8 @@ export const init = async (argv: string) =>
 			for (i = 0; i < eventNames.length; ++i)
 				window[eventNames[i] as any] = null; // @ts-ignore
 			host.shutdown();
+			tickWorker?.terminate()
+			tickWorker = null
 			document.body.style.cursor = 'auto';
 			if (state.hooks && state.hooks.quit) {
 				state.hooks.quit(state.quitStatus.reason || '');
@@ -425,10 +483,11 @@ export const init = async (argv: string) =>
 			return;
 		}
 
-		requestAnimationFrame(gameLoop)
+		frameInFlight = false
+		scheduleFrame()
 	}
 
-	requestAnimationFrame(gameLoop);
+	scheduleFrame();
 };
 
 const events = {

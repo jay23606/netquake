@@ -8,7 +8,6 @@ import { defaultConfiguration } from '../../../shared/webrtc/configuration'
 import { FTEBroker } from '../../../shared/webrtc/FTEBroker'
 import { Signaling } from '../../../shared/webrtc/signaling'
 import { IWebRTCBroker } from '../../../shared/webrtc/IWebRTCBroker'
-import { RoomBroker } from '../../../engine/webrtc/RoomBroker'
 import * as sys from '../sys'
 import * as cvar from '../../../engine/cvar'
 
@@ -56,13 +55,11 @@ const state: WebRTCState = {
 	webRtcDriver: null
 }
 
-
 // The frontend supplies an already-connected broker for Supabase-hosted rooms
-// (SupabaseBroker.connect is async, so it is awaited in the app). The legacy
-// room-server path builds one over the WebSocket the app injected instead.
-const roomBroker = (): IWebRTCBroker =>
-	sys.state.initArgs.broker
-		?? new RoomBroker(createSignaling(sys.state.initArgs.socket), sys.state.initArgs.playerId)
+// (SupabaseBroker.connect is async, so the app awaits it and injects the result).
+// There is no fallback any more: the legacy room-server flow that used to build
+// one over an injected WebSocket has been removed.
+const roomBroker = (): IWebRTCBroker | null => sys.state.initArgs.broker ?? null
 
 const createSignaling = (ws: WebSocket): Signaling => {
 	let eventToMessageHandler: (event: MessageEvent) => void
@@ -143,10 +140,10 @@ export const init = () => {
 
 export const listen = () => {
 	state.currentRole = 'server'
-	if (sys.state.initArgs.isHost && (sys.state.initArgs.broker || sys.state.initArgs.socket)) {
-		// Args are injected by the frontend: either a connected Supabase broker
-		// or the legacy room-server WebSocket.
-		initBroker(roomBroker())
+	const injected = roomBroker()
+	if (sys.state.initArgs.isHost && injected) {
+		// The frontend connects the signaling broker and injects it here.
+		initBroker(injected)
 	} else {
 		const wsHost = `${cvr.broker.string}/FTE-Quake/${net.cvr.hostname.string}`
 		websocket = new WebSocket(wsHost, ['rtc_host'])
@@ -264,7 +261,12 @@ export const connect = async (host: string): Promise<QConnectStatus> =>
 	if (!isRoom) sock.protocol = 'nqnetchan'
 
 	if (isRoom) {
-		initBroker(roomBroker())
+		const injected = roomBroker()
+		if (!injected) {
+			print('WebRTC: no signaling broker was injected for this room.\n')
+			return 'failed'
+		}
+		initBroker(injected)
 	} else {
 		const { brokerUrl, resource } = parseRtcUri(host)
 		const broker = brokerUrl || cvr.broker.string
