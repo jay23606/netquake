@@ -7,6 +7,9 @@ import { SupabaseBroker } from '../../engine/webrtc/SupabaseBroker'
 export type Room = {
 	// Populated by listRooms via an aggregate join; absent on single-row reads.
 	nq_room_players?: { count: number }[]
+	// Host profile, embedded via the host_id FK (named explicitly because
+	// nq_rooms reaches nq_profiles two ways -- directly and through players).
+	nq_profiles?: { name: string } | null
 	id: string
 	code: string
 	name: string
@@ -25,6 +28,9 @@ export type RoomPlayer = {
 }
 
 // Unambiguous alphabet: no O/0, I/1, so codes survive being read aloud.
+// Captured at sign-in so the unload handler has a token without awaiting.
+let cachedAccessToken: string | null = null
+
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
 const makeCode = (len = 5): string => {
@@ -59,18 +65,29 @@ export const ensurePlayer = async (name: string): Promise<{ id: string, name: st
 		.upsert({ id: user.id, name: trimmed }, { onConflict: 'id' })
 	if (upsertError) throw new Error(`Could not save profile: ${upsertError.message}`)
 
+	const { data: { session } } = await supabase.auth.getSession()
+	cachedAccessToken = session?.access_token ?? null
+
 	return { id: user.id, name: trimmed }
 }
 
 export const playerCount = (room: Room): number =>
 	room.nq_room_players?.[0]?.count ?? 0
 
+export const hostName = (room: Room): string => room.nq_profiles?.name ?? "unknown"
+
+// Rooms are only closed when the host explicitly leaves, so a host who closed
+// their tab can strand one. Hiding old rooms keeps those out of the list even
+// when the unload cleanup did not get through.
+const MAX_ROOM_AGE_MINUTES = 60
+
 export const listRooms = async (): Promise<Room[]> => {
 	const { data, error } = await getSupabase()
 		.from("nq_rooms")
-		.select("*, nq_room_players(count)")
-		.eq('is_open', true)
-		.order('created_at', { ascending: false })
+		.select("*, nq_profiles!nq_rooms_host_id_fkey(name), nq_room_players(count)")
+		.eq("is_open", true)
+		.gt("created_at", new Date(Date.now() - MAX_ROOM_AGE_MINUTES * 60_000).toISOString())
+		.order("created_at", { ascending: false })
 		.limit(50)
 	if (error) throw new Error(`Could not list rooms: ${error.message}`)
 	return (data ?? []) as Room[]
@@ -165,4 +182,22 @@ export const subscribeRooms = (onChange: () => void): (() => void) => {
 		.subscribe()
 
 	return () => { void channel.unsubscribe() }
+}
+
+// Best-effort room cleanup when the tab closes. Promises do not get to finish
+// during unload, so this goes straight at PostgREST with keepalive, which the
+// browser is permitted to complete after the page is gone. Deleting the host's
+// row fires the schema trigger that closes the room.
+export const leaveRoomOnUnload = (roomId: string, playerId: string): void => {
+	if (!cachedAccessToken) return
+	const base = import.meta.env.VITE_SUPABASE_URL
+	const key = import.meta.env.VITE_SUPABASE_ANON_KEY
+	void fetch(
+		`${base}/rest/v1/nq_room_players?room_id=eq.${roomId}&player_id=eq.${playerId}`,
+		{
+			method: 'DELETE',
+			keepalive: true,
+			headers: { apikey: key, Authorization: `Bearer ${cachedAccessToken}` },
+		},
+	).catch(() => { /* unload cleanup is best effort */ })
 }

@@ -35,7 +35,7 @@
             <li v-for="r in openRooms" :key="r.id">
               <div class="who">
                 <strong>{{ r.name }}</strong>
-                <span class="muted">{{ r.map }} · {{ count(r) }}/{{ r.max_players }} players</span>
+                <span class="muted">{{ hostOf(r) }} &middot; {{ r.map }} &middot; {{ count(r) }}/{{ r.max_players }} players &middot; {{ age(r) }}</span>
               </div>
               <button :disabled="busy || count(r) >= r.max_players" @click="joinRoom(r)">
                 {{ count(r) >= r.max_players ? 'Full' : 'Join' }}
@@ -84,7 +84,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSupabaseRoomStore } from '../../../stores/supabaseRoom'
-import { playerCount, subscribeRooms, type Room } from '../../../../../shared/supabase/rooms'
+import { playerCount, hostName, subscribeRooms, leaveRoomOnUnload, type Room } from '../../../../../shared/supabase/rooms'
 
 const router = useRouter()
 const store = useSupabaseRoomStore()
@@ -105,6 +105,20 @@ let unsubscribe: (() => void) | null = null
 const maps = ['e1m1', 'e1m2', 'e1m3', 'e1m4', 'e1m5', 'e1m6', 'e1m7', 'e1m8', 'dm1', 'dm2', 'dm3']
 
 const count = (r: Room) => playerCount(r)
+const hostOf = (r: Room) => hostName(r)
+
+// Several rooms open at once are otherwise hard to tell apart.
+const age = (r: Room) => {
+  const mins = Math.floor((Date.now() - new Date(r.created_at).getTime()) / 60000)
+  if (mins < 1) return 'just now'
+  return mins < 60 ? `${mins}m ago` : `${Math.floor(mins / 60)}h ago`
+}
+
+// A host closing the tab would otherwise strand an open room nobody can play
+// in; deleting their row fires the schema trigger that closes it.
+const onUnload = () => {
+  if (store.room && store.playerId) leaveRoomOnUnload(store.room.id, store.playerId)
+}
 
 const run = async (fn: () => Promise<unknown>) => {
   busy.value = true
@@ -145,10 +159,12 @@ const launch = () => {
 }
 
 onMounted(() => {
+  window.addEventListener('beforeunload', onUnload)
   if (store.playerId) { void refresh(); watchRooms() }
 })
 
 onUnmounted(() => {
+  window.removeEventListener('beforeunload', onUnload)
   unsubscribe?.()
   unsubscribe = null
   live.value = false
