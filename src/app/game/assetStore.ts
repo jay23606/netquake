@@ -56,7 +56,7 @@ type ProgressCallback = (current: number, total: number) => void
 const checkRemoteFileList = async function (game: string, fileName: string) : Promise<boolean> {
   if (!remoteIndexes[game]) {
     try {
-      remoteIndexes[game] = (await axios.get('/api/assets/' + game)).data
+      remoteIndexes[game] = (await axios.get(`${import.meta.env.BASE_URL}gamedata/${game}.json`)).data
     } catch (err) {
       sys.print('Error getting asset index from server: '+ err.message + '\n')
       remoteIndexes[game] = []
@@ -437,7 +437,7 @@ const loadServerPackFile = async (game: string, packName: string) : Promise<PakD
     if (!import.meta.env.DEV && !await checkRemoteFileList(game, packfile)) {
       return null
     }
-    const data = await getFileWithProgress(packfile, (current, total) => {
+    const data = await getFileWithProgress(`${import.meta.env.BASE_URL}gamedata/${packfile}`, (current, total) => {
       // TODO UI Progress
     })
     if (!data) {
