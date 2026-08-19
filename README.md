@@ -20,16 +20,30 @@ stored locally in IndexedDB and never uploaded anywhere.
 | Static hosting on GitHub Pages | working |
 | Supabase schema, auth and lobby | working |
 | Live room list (Realtime) | working |
-| Peer-to-peer game connection | wired, not yet verified |
+| Peer-to-peer game connection | working |
+| WASM server sim | working |
 
-The lobby is confirmed against the live database: anonymous sign-in, room
-creation, joining and the Realtime room list all work. What has not been
-proven is the peer connection itself -- no SDP offer has been observed crossing
-a Realtime channel and no DataChannel has been seen to open. Two browsers are
-needed to settle that.
+Multiplayer is confirmed end to end between two browsers: anonymous sign-in,
+room creation and joining, the Realtime room list, SDP/ICE crossing a Supabase
+broadcast channel, ICE reaching `connected`, and the joining player loading the
+map over the DataChannel while the host logs `player entered the game`.
 
 Note that STUN alone will not connect peers behind symmetric NAT; a TURN relay
 goes in `VITE_ICE_SERVERS` if that turns out to matter.
+
+### Not carried over from upstream
+
+The lobby is deliberately minimal. Upstream's room flow, which ran against a
+server this build does not have, additionally offered:
+
+- a synchronised launch: the host started the match and every peer entered
+  together, rather than each player pressing Start for themselves
+- lobby chat, with join/leave/kick/timeout events
+- a player list with host controls (kick, ban) and player colours
+- game settings: game type, frag limit, time limit, skill, game directory
+- a custom/Quaddicted map picker, and sharing map-download progress with the
+  room so the host can see who is still fetching assets
+- a server browser fed by a master server
 
 ## Architecture
 
