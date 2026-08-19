@@ -26,7 +26,7 @@ const assetMetas = computed(() => gameStore.assetMetas.filter(a => a.game === 'i
 const packOne = computed(() => assetMetas.value.find(a => a.fileName.toLowerCase() === 'pak1.pak'))
 
 const start = () => router.push({ name: 'quake' })
-const multiplayer = () => router.push({ name: 'multiplayer' })
+const multiplayer = () => router.push({ name: 'sb-multiplayer' })
 </script>
 
 <style lang="scss" scoped>
