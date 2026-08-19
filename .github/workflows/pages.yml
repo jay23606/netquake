@@ -26,6 +26,12 @@ jobs:
       - run: npm ci
       - run: npm run build:sim
       - run: npx vite build
+      # Quake 2 builds after Quake 1, whose build empties dist/app, and emits
+      # into dist/app/q2 so one Pages deploy serves both engines.
+      - run: npm ci
+        working-directory: q2
+      - run: npm run build
+        working-directory: q2
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/app

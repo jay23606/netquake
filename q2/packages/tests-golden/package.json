@@ -1,0 +1,5 @@
+{
+  "name": "@quake2js/tests-golden",
+  "private": true,
+  "type": "module"
+}

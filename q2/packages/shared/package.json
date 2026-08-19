@@ -1,0 +1,5 @@
+{
+  "name": "@quake2js/shared",
+  "private": true,
+  "type": "module"
+}

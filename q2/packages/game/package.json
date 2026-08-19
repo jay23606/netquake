@@ -1,0 +1,5 @@
+{
+  "name": "@quake2js/game",
+  "private": true,
+  "type": "module"
+}

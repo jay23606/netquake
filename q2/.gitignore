@@ -1,0 +1,15 @@
+Quake 2
+Quake-2-master
+node_modules
+Quake 2.7z
+**/node_modules/
+**/.vite/
+.artifacts/
+**/.artifacts/
+dist/
+**/dist/
+TODO.md
+PLANS_REALISES
+audit-portage/
+SYNTHESE_MATRICES_CIBLES_PROPRIETAIRES.md
+GITHUB_PAGES_DEPLOYMENT.md

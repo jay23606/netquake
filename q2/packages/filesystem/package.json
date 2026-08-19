@@ -1,0 +1,5 @@
+{
+  "name": "@quake2js/filesystem",
+  "private": true,
+  "type": "module"
+}

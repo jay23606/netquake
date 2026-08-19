@@ -1,0 +1,5 @@
+{
+  "name": "@quake2js/renderer-three",
+  "private": true,
+  "type": "module"
+}

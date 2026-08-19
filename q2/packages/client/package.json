@@ -1,0 +1,5 @@
+{
+  "name": "@quake2js/client",
+  "private": true,
+  "type": "module"
+}

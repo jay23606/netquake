@@ -1,0 +1,36 @@
+{
+  "name": "quake2js",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @quake2js/web",
+    "build": "npm run build --workspace @quake2js/web",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "audit:socle": "npx tsx ./audit-portage/phases/phase-00-socle-outillage/tools/build-portage-audit-index.ts",
+    "audit:phase1": "npm run audit:socle && npx tsx ./audit-portage/phases/phase-01-referentiel-audit/tools/build-reference-audit.ts",
+    "audit:phase2": "npm run audit:phase1 && npx tsx ./audit-portage/phases/phase-02-source-vers-typescript/tools/build-structure-audit.ts",
+    "audit:phase2:apply-simple-renames": "npx tsx ./audit-portage/phases/phase-02-source-vers-typescript/tools/apply-simple-renames.ts",
+    "audit:phase3:03a": "npx tsx ./audit-portage/phases/phase-03-runtime-exhaustif/tools/run-phase-03a.ts",
+    "audit:phase3:03b": "npx tsx ./audit-portage/phases/phase-03-runtime-exhaustif/tools/P03-TOOL-06-coverage-matrix-generator.ts",
+    "audit:phase3:03c": "npx tsx ./audit-portage/phases/phase-03-runtime-exhaustif/tools/run-phase-03c.ts",
+    "audit:phase3:03d": "npx tsx ./audit-portage/phases/phase-03-runtime-exhaustif/tools/run-phase-03d.ts",
+    "audit:phase3:03e": "npx tsx ./audit-portage/phases/phase-03-runtime-exhaustif/tools/run-phase-03e.ts",
+    "audit:phase3:03f": "npx tsx ./audit-portage/phases/phase-03-runtime-exhaustif/tools/run-phase-03f.ts",
+    "audit:phase3:functions": "npx tsx ./audit-portage/phases/phase-03-runtime-exhaustif/tools/run-function-body-comparison.ts",
+    "audit:validation:matrices": "npx tsx ./audit-portage/validation-incrementale/tools/generate-validation-matrices.ts",
+    "audit:validation:matrices:reliable": "npx tsx ./audit-portage/validation-incrementale/tools/generate-reliable-validation-matrices.ts --with-base",
+    "audit:validation:ts-matrices": "npx tsx ./audit-portage/validation-incrementale/tools/generate-ts-cross-validation-matrices.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/three": "^0.184.0",
+    "three": "^0.184.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.8"
+  }
+}
