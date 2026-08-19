@@ -17,13 +17,18 @@ obligation stands regardless of that omission.
 
 Upstream Quake II source: https://github.com/id-Software/Quake-2
 
-## What was left out
+## Game data
 
-- `apps/web/public/baseq2/` — the game data pak. Upstream describes it as the
-  Quake II demo/shareware pack, but unlike the Quake 1 shareware pak (which can
-  be checked against a known size and a 339-entry count the engine itself
-  verifies) there is no independent signal confirming that here. It is
-  deliberately not redistributed from this repository until that is settled.
+`apps/web/public/baseq2/pak0.pak` is the Quake II **demo** data pack, which id
+distributed freely. Upstream says so, and that claim was checked rather than
+taken on trust: the pak directory holds exactly three maps, `demo1`, `demo2` and
+`demo3`, and none of the ~40 retail map names (`base1`, `jail1`, `city1`, and so
+on). `PACK` magic, 49,951,322 bytes, 1106 entries.
+
+Retail Quake II data is not included and should not be added here.
+
+## What else was left out
+
 - `node_modules/`, `dist/`, `.git/`, `audit-portage/`
 
 ## Local changes
