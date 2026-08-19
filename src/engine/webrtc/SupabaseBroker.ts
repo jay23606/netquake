@@ -6,7 +6,7 @@ import { getSupabase, iceServers } from '../../shared/supabase/client'
 // The lobby constructs this broker before the engine boots, so it cannot use the
 // engine console: dPrint reads host.cvr.developer, which does not exist until
 // host.init has registered cvars.
-const dbg = (msg: string) => console.debug("[supabase-signal]", msg.trim())
+const dbg = (msg: string) => console.log("[supabase-signal]", msg.trim())
 
 // Signaling over Supabase Realtime.
 //
@@ -19,7 +19,7 @@ const dbg = (msg: string) => console.debug("[supabase-signal]", msg.trim())
 // hop here, so every payload carries explicit `from`/`to` and each peer filters
 // for itself. `to: null` means "everyone in the room".
 
-type SignalType = 'ready' | 'sdp' | 'candidate' | 'removed'
+type SignalType = 'ready' | 'newPeer' | 'sdp' | 'candidate' | 'removed'
 
 type Signal = {
 	type: SignalType
@@ -129,9 +129,22 @@ export class SupabaseBroker
 
 		switch (signal.type) {
 			case 'ready':
-				// Only the host accepts new peers; clients ignore each other's
-				// arrival, exactly as the room server's fan-out behaved.
+				// Only the host accepts arrivals; clients ignore each other.
 				if (!this.isHost) return
+				this.knownPeers.add(signal.from)
+				this.emit('newPeer', {
+					clientId: signal.from,
+					iceServers: iceServers(),
+				})
+				// The client branch of webrtc.ts's newPeer handler is what builds
+				// the offer, so the client needs a newPeer of its own naming this
+				// host. Without it the host answers an offer that never arrives.
+				this.send('newPeer', signal.from)
+				return
+
+			case 'newPeer':
+				// The host announcing itself to a client that just joined.
+				if (this.isHost) return
 				this.knownPeers.add(signal.from)
 				this.emit('newPeer', {
 					clientId: signal.from,
