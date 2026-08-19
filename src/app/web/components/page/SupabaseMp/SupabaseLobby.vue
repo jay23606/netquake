@@ -25,17 +25,19 @@
             Open games
             <span class="live" :class="{ on: live }">{{ live ? 'live' : 'offline' }}</span>
           </h2>
-
           <p v-if="!openRooms.length" class="muted">
             Nobody is hosting right now. Start a game below and it will appear
             here for everyone else.
           </p>
-
           <ul v-else>
             <li v-for="r in openRooms" :key="r.id">
               <div class="who">
                 <strong>{{ r.name }}</strong>
-                <span class="muted">{{ hostOf(r) }} &middot; {{ r.map }} &middot; {{ count(r) }}/{{ r.max_players }} players &middot; {{ age(r) }}</span>
+                <span class="muted">
+                  {{ hostOf(r) }} &middot; {{ r.map }} &middot;
+                  {{ count(r) }}/{{ r.max_players }} players &middot; {{ age(r) }}
+                  <span v-if="r.status === 'in-game'" class="tag">in game</span>
+                </span>
               </div>
               <button :disabled="busy || count(r) >= r.max_players" @click="joinRoom(r)">
                 {{ count(r) >= r.max_players ? 'Full' : 'Join' }}
@@ -64,27 +66,110 @@
         </section>
       </template>
 
-      <section v-else class="panel">
-        <h2>{{ store.room.name }}</h2>
-        <p class="muted">
-          Map {{ store.room.map }} · {{ store.isHost ? 'you are hosting' : 'joined' }}
-          · {{ store.players.length }} player(s)
-        </p>
+      <section v-else class="panel room">
+        <h2>
+          {{ store.room.name }}
+          <span class="tag">{{ store.room.status === 'in-game' ? 'in game' : 'lobby' }}</span>
+        </h2>
         <p class="muted">Code <strong class="code">{{ store.room.code }}</strong></p>
-        <button :disabled="busy" @click="launch">
-          {{ store.isHost ? 'Start game' : 'Enter game' }}
-        </button>
-        <button class="link" :disabled="busy" @click="leave">Leave</button>
+
+        <div class="cols">
+          <div class="col">
+            <h3>Players ({{ store.players.length }}/{{ store.room.max_players }})</h3>
+            <ul class="players">
+              <li v-for="p in store.players" :key="p.player_id">
+                <span class="swatch" :style="{ background: colorHex(p.color) }"></span>
+                <span class="pname">{{ nameOf(p) }}</span>
+                <span v-if="p.is_host" class="tag">host</span>
+                <span v-if="p.asset_progress < 100" class="muted">{{ p.asset_progress }}%</span>
+                <template v-if="store.isHost && p.player_id !== store.playerId">
+                  <button class="link" :disabled="busy" @click="kick(p.player_id)">kick</button>
+                  <button class="link" :disabled="busy" @click="ban(p.player_id)">ban</button>
+                </template>
+              </li>
+            </ul>
+
+            <h3>Your colour</h3>
+            <div class="colors">
+              <button v-for="c in 14" :key="c" class="swatch pick"
+                :class="{ on: myColor === c - 1 }"
+                :style="{ background: colorHex(c - 1) }"
+                @click="pickColor(c - 1)"></button>
+            </div>
+
+            <h3>Match settings</h3>
+            <div v-if="store.isHost" class="settings">
+              <label>Map
+                <select v-model="settings.map" @change="saveSettings">
+                  <option v-for="m in maps" :key="m" :value="m">{{ m }}</option>
+                </select>
+              </label>
+              <label>Mode
+                <select v-model="settings.gameType" @change="saveSettings">
+                  <option value="deathmatch">Deathmatch</option>
+                  <option value="coop">Co-op</option>
+                </select>
+              </label>
+              <label>Frag limit
+                <input type="number" min="0" max="200" v-model.number="settings.fragLimit"
+                  @change="saveSettings" />
+              </label>
+              <label>Time limit (min)
+                <input type="number" min="0" max="120" v-model.number="settings.timeLimit"
+                  @change="saveSettings" />
+              </label>
+              <label v-if="settings.gameType === 'coop'">Skill
+                <select v-model.number="settings.skill" @change="saveSettings">
+                  <option :value="0">Easy</option>
+                  <option :value="1">Normal</option>
+                  <option :value="2">Hard</option>
+                  <option :value="3">Nightmare</option>
+                </select>
+              </label>
+            </div>
+            <p v-else class="muted">
+              {{ store.room.map }} &middot; {{ settings.gameType }}
+              &middot; frags {{ settings.fragLimit || '∞' }}
+              &middot; time {{ settings.timeLimit || '∞' }}
+            </p>
+          </div>
+
+          <div class="col">
+            <h3>Chat</h3>
+            <div class="chat" ref="chatBox">
+              <p v-for="m in store.chat" :key="m.id" :class="m.kind">
+                <template v-if="m.kind === 'event'">
+                  <em>{{ chatName(m) }} {{ m.body }}</em>
+                </template>
+                <template v-else>
+                  <strong>{{ chatName(m) }}:</strong> {{ m.body }}
+                </template>
+              </p>
+              <p v-if="!store.chat.length" class="muted">No messages yet.</p>
+            </div>
+            <input v-model="chatDraft" maxlength="500" placeholder="say something"
+              @keyup.enter="say" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button v-if="store.isHost" :disabled="busy" @click="launch">Start game</button>
+          <button v-else :disabled="busy" @click="enterGame">Enter game</button>
+          <button class="link" :disabled="busy" @click="leave">Leave</button>
+        </div>
       </section>
     </template>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSupabaseRoomStore } from '../../../stores/supabaseRoom'
-import { playerCount, hostName, subscribeRooms, leaveRoomOnUnload, type Room } from '../../../../../shared/supabase/rooms'
+import {
+  playerCount, hostName, subscribeRooms, leaveRoomOnUnload,
+  defaultGameSettings, type Room, type RoomPlayer, type ChatMessage,
+} from '../../../../../shared/supabase/rooms'
 
 const router = useRouter()
 const store = useSupabaseRoomStore()
@@ -96,6 +181,8 @@ const map = ref('e1m1')
 const busy = ref(false)
 const live = ref(false)
 const showCode = ref(false)
+const chatDraft = ref('')
+const chatBox = ref<HTMLElement | null>(null)
 const openRooms = ref<Room[]>([])
 
 let unsubscribe: (() => void) | null = null
@@ -104,20 +191,26 @@ let unsubscribe: (() => void) | null = null
 // guaranteed to have, since pak1 is not distributed.
 const maps = ['e1m1', 'e1m2', 'e1m3', 'e1m4', 'e1m5', 'e1m6', 'e1m7', 'e1m8', 'dm1', 'dm2', 'dm3']
 
+// Quake's 14 player colours, approximated for the lobby swatches.
+const PALETTE = [
+  '#d8d8d8', '#a86c34', '#5c78a8', '#3c6c3c', '#a83c3c', '#8c5c2c', '#a8a83c', '#6c3c8c',
+  '#3c8c8c', '#c86c9c', '#5c5c5c', '#c8a86c', '#2c4c8c', '#8c2c2c',
+]
+const colorHex = (i: number) => PALETTE[i % PALETTE.length]
+
+const settings = reactive({ ...defaultGameSettings(), map: 'e1m1' })
+
 const count = (r: Room) => playerCount(r)
 const hostOf = (r: Room) => hostName(r)
+const nameOf = (p: RoomPlayer) => p.nq_profiles?.name ?? 'player'
+const chatName = (m: ChatMessage) => m.nq_profiles?.name ?? 'someone'
+const myColor = computed(() =>
+  store.players.find((p: RoomPlayer) => p.player_id === store.playerId)?.color ?? 0)
 
-// Several rooms open at once are otherwise hard to tell apart.
 const age = (r: Room) => {
   const mins = Math.floor((Date.now() - new Date(r.created_at).getTime()) / 60000)
   if (mins < 1) return 'just now'
   return mins < 60 ? `${mins}m ago` : `${Math.floor(mins / 60)}h ago`
-}
-
-// A host closing the tab would otherwise strand an open room nobody can play
-// in; deleting their row fires the schema trigger that closes it.
-const onUnload = () => {
-  if (store.room && store.playerId) leaveRoomOnUnload(store.room.id, store.playerId)
 }
 
 const run = async (fn: () => Promise<unknown>) => {
@@ -148,15 +241,68 @@ const host = () => run(async () => {
 const joinRoom = (r: Room) => run(() => store.joinRoom(r))
 const joinByCode = () => run(() => store.join(code.value))
 const leave = () => run(async () => { await store.leave(); await refresh() })
+const kick = (id: string) => run(() => store.kick(id))
+const ban = (id: string) => run(() => store.ban(id))
+const pickColor = (c: number) => run(() => store.setColor(c))
+const saveSettings = () => run(() =>
+  store.saveSettings({ ...settings }, settings.map))
 
-// Mirrors the legacy room flow: the host listens, everyone else dials the
-// magic room address, which routes through the injected broker.
-const launch = () => {
-  const query: Record<string, string> = store.isHost
-    ? { '-listen': '16', '+map': store.room!.map }
-    : { '-connect': 'rtc://netquake.io/room' }
-  router.push({ path: '/mp/quake', query })
+const say = () => {
+  const body = chatDraft.value
+  chatDraft.value = ''
+  void run(() => store.say(body))
 }
+
+// Engine command line. The host listens; everyone else dials the room address,
+// which routes through the broker the app injected.
+const gameQuery = (): Record<string, string> => {
+  const s = store.room?.game_settings ?? defaultGameSettings()
+  const rules: Record<string, string> = {
+    '+fraglimit': String(s.fragLimit ?? 0),
+    '+timelimit': String(s.timeLimit ?? 0),
+  }
+  if (!store.isHost) return { '-connect': 'rtc://netquake.io/room', ...rules }
+  return {
+    '-listen': String(store.room?.max_players ?? 8),
+    '+map': store.room?.map ?? 'e1m1',
+    ...(s.gameType === 'coop'
+      ? { '+coop': '1', '+skill': String(s.skill ?? 1) }
+      : { '+deathmatch': '1' }),
+    ...rules,
+  }
+}
+
+const enterGame = () => router.push({ path: '/mp/quake', query: gameQuery() })
+
+// Host flips the room to in-game; the watcher below carries everyone in,
+// including the host, so nobody has to press Start for themselves.
+const launch = () => run(() => store.launch())
+
+const onUnload = () => {
+  if (store.room && store.playerId) leaveRoomOnUnload(store.room.id, store.playerId)
+}
+
+// The launch signal. Everyone in the room -- host included -- follows the room
+// row into the game, so the match starts together instead of one player at a
+// time. Guarded so it only fires on the transition into 'in-game'.
+watch(() => store.room?.status, (now, before) => {
+  if (now === 'in-game' && before && before !== 'in-game') {
+    router.push({ path: '/mp/quake', query: gameQuery() })
+  }
+})
+
+// Keep the host's settings form in step with whatever the room actually holds,
+// so a second browser editing them does not get clobbered.
+watch(() => store.room?.game_settings, (s) => {
+  if (s) Object.assign(settings, s)
+}, { immediate: true, deep: true })
+
+watch(() => store.room?.map, (m) => { if (m) settings.map = m }, { immediate: true })
+
+watch(() => store.chat.length, async () => {
+  await nextTick()
+  if (chatBox.value) chatBox.value.scrollTop = chatBox.value.scrollHeight
+})
 
 onMounted(() => {
   window.addEventListener('beforeunload', onUnload)
@@ -172,15 +318,33 @@ onUnmounted(() => {
 </script>
 
 <style lang="scss" scoped>
-.sb-lobby { max-width: 760px; margin: 0 auto; padding: 32px 24px; }
+.sb-lobby { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
 .sub { opacity: 0.75; margin-bottom: 24px; }
 .panel { border: 1px solid rgba(128,128,128,0.35); padding: 16px; margin-bottom: 16px; }
 .panel h2 { margin: 0 0 12px; font-size: 1rem; text-transform: uppercase; display: flex; gap: 10px; align-items: center; }
+.panel h3 { margin: 18px 0 8px; font-size: 0.8rem; text-transform: uppercase; opacity: 0.8; }
 .panel input, .panel select { margin-right: 8px; padding: 6px 8px; }
 .panel.secondary { border-style: dashed; opacity: 0.85; }
 .rooms li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(128,128,128,0.2); }
 .rooms li:last-child { border-bottom: none; }
 .who { display: flex; flex-direction: column; }
+.cols { display: flex; gap: 24px; flex-wrap: wrap; }
+.col { flex: 1 1 320px; min-width: 0; }
+.players { list-style: none; padding: 0; margin: 0; }
+.players li { display: flex; align-items: center; gap: 8px; padding: 5px 0; }
+.pname { font-weight: 600; }
+.swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1px solid rgba(0,0,0,0.4); }
+.swatch.pick { width: 20px; height: 20px; cursor: pointer; padding: 0; }
+.swatch.pick.on { outline: 2px solid #d9534f; outline-offset: 2px; }
+.colors { display: flex; gap: 6px; flex-wrap: wrap; }
+.settings { display: flex; flex-direction: column; gap: 8px; }
+.settings label { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.settings input { width: 90px; }
+.chat { height: 220px; overflow-y: auto; border: 1px solid rgba(128,128,128,0.25); padding: 8px; margin-bottom: 8px; }
+.chat p { margin: 0 0 4px; font-size: 0.9rem; }
+.chat p.event { opacity: 0.65; }
+.actions { margin-top: 18px; display: flex; gap: 10px; align-items: center; }
+.tag { font-size: 0.7rem; text-transform: uppercase; opacity: 0.7; border: 1px solid currentColor; padding: 0 5px; border-radius: 3px; }
 .live { font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; }
 .live.on { color: #5cb85c; opacity: 1; }
 .err { color: #d9534f; }
@@ -188,6 +352,6 @@ onUnmounted(() => {
 .code { letter-spacing: 3px; font-size: 1.2rem; }
 .code-entry { margin-top: 10px; }
 button { padding: 6px 14px; cursor: pointer; }
-button.link { background: none; border: none; text-decoration: underline; padding: 0; }
+button.link { background: none; border: none; text-decoration: underline; padding: 0 4px; }
 ul { list-style: none; padding: 0; margin: 0; }
 </style>

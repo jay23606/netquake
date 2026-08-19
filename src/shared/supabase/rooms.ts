@@ -358,3 +358,15 @@ export const subscribeRoom = (
 
 	return () => { void channel.unsubscribe() }
 }
+
+// Re-read one room. Returns null once the host has closed it, which is how
+// peers learn the room is gone.
+export const findRoomById = async (roomId: string): Promise<Room | null> => {
+	const { data, error } = await getSupabase()
+		.from('nq_rooms')
+		.select('*, nq_profiles!nq_rooms_host_id_fkey(name), nq_room_players(count)')
+		.eq('id', roomId)
+		.maybeSingle()
+	if (error) throw new Error(`Could not read room: ${error.message}`)
+	return (data as Room) ?? null
+}
