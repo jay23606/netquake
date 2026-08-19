@@ -2,7 +2,11 @@ import { RealtimeChannel } from '@supabase/supabase-js'
 import { EventEmitter } from '../../shared/eventEmitter'
 import { IWebRTCBroker, MessageEvents } from '../../shared/webrtc/IWebRTCBroker'
 import { getSupabase, iceServers } from '../../shared/supabase/client'
-import { dPrint } from '../console'
+
+// The lobby constructs this broker before the engine boots, so it cannot use the
+// engine console: dPrint reads host.cvr.developer, which does not exist until
+// host.init has registered cvars.
+const dbg = (msg: string) => console.debug("[supabase-signal]", msg.trim())
 
 // Signaling over Supabase Realtime.
 //
@@ -62,7 +66,7 @@ export class SupabaseBroker
 		channel.on('presence', { event: 'leave' }, ({ key }: { key: string }) => {
 			if (key === this.playerId || !this.knownPeers.has(key)) return
 			this.knownPeers.delete(key)
-			dPrint(`Supabase: peer ${key} left the room\n`)
+			dbg(`Supabase: peer ${key} left the room\n`)
 			this.emit('peerLost', { clientId: key, reason: 'left the room' })
 		})
 
@@ -81,7 +85,7 @@ export class SupabaseBroker
 			})
 		})
 
-		dPrint(`Supabase: signaling connected to room ${this.roomId}\n`)
+		dbg(`Supabase: signaling connected to room ${this.roomId}\n`)
 		this.emit('greeting', { gameName: 'netquake' })
 	}
 
@@ -89,7 +93,7 @@ export class SupabaseBroker
 		if (!signal || signal.from === this.playerId) return
 		if (signal.to !== null && signal.to !== this.playerId) return
 
-		dPrint(`Supabase: received ${signal.type} from ${signal.from}\n`)
+		dbg(`Supabase: received ${signal.type} from ${signal.from}\n`)
 
 		switch (signal.type) {
 			case 'ready':
@@ -127,10 +131,10 @@ export class SupabaseBroker
 
 	private send = (type: SignalType, to: string | null, data?: string) => {
 		if (!this.channel) {
-			dPrint(`Supabase: dropped ${type} -- signaling not connected\n`)
+			dbg(`Supabase: dropped ${type} -- signaling not connected\n`)
 			return
 		}
-		dPrint(`Supabase: sending ${type} to ${to ?? 'room'}\n`)
+		dbg(`Supabase: sending ${type} to ${to ?? 'room'}\n`)
 		void this.channel.send({
 			type: 'broadcast',
 			event: SIGNAL_EVENT,
@@ -154,6 +158,6 @@ export class SupabaseBroker
 		void this.channel.unsubscribe()
 		this.channel = null
 		this.knownPeers.clear()
-		dPrint('Supabase: signaling closed\n')
+		dbg('Supabase: signaling closed\n')
 	}
 }
