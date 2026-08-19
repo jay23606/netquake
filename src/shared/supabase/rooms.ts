@@ -111,7 +111,9 @@ export const joinRoom = async (roomId: string, playerId: string): Promise<void> 
 	const { error } = await getSupabase()
 		.from('nq_room_players')
 		.upsert({ room_id: roomId, player_id: playerId, is_host: false },
-			{ onConflict: 'room_id,player_id' })
+			// DO NOTHING rather than DO UPDATE: an upsert that updates would also
+			// need an UPDATE policy, and re-joining should not rewrite is_host.
+			{ onConflict: "room_id,player_id", ignoreDuplicates: true })
 	if (error) throw new Error(`Could not join room: ${error.message}`)
 }
 
