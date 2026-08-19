@@ -66,6 +66,25 @@ export const useSupabaseRoomStore = defineStore('supabaseRoom', {
       }
     },
 
+    // Join a room already in hand from the lobby list -- no code lookup needed.
+    async joinRoom(room: rooms.Room) {
+      this.status = "connecting"
+      this.error = null
+      try {
+        if (!this.playerId) throw new Error("Not signed in")
+        await rooms.joinRoom(room.id, this.playerId)
+        this.room = room
+        activeBroker = await rooms.connectBroker(room.id, this.playerId, false)
+        this.players = await rooms.listRoomPlayers(room.id)
+        this.status = "in-room"
+        return room
+      } catch (e) {
+        this.status = "error"
+        this.error = e instanceof Error ? e.message : String(e)
+        throw e
+      }
+    },
+
     async join(code: string) {
       this.status = 'connecting'
       this.error = null

@@ -5,6 +5,8 @@ import { SupabaseBroker } from '../../engine/webrtc/SupabaseBroker'
 // Vue shell can be replaced without touching this.
 
 export type Room = {
+	// Populated by listRooms via an aggregate join; absent on single-row reads.
+	nq_room_players?: { count: number }[]
 	id: string
 	code: string
 	name: string
@@ -60,10 +62,13 @@ export const ensurePlayer = async (name: string): Promise<{ id: string, name: st
 	return { id: user.id, name: trimmed }
 }
 
+export const playerCount = (room: Room): number =>
+	room.nq_room_players?.[0]?.count ?? 0
+
 export const listRooms = async (): Promise<Room[]> => {
 	const { data, error } = await getSupabase()
-		.from('nq_rooms')
-		.select('*')
+		.from("nq_rooms")
+		.select("*, nq_room_players(count)")
 		.eq('is_open', true)
 		.order('created_at', { ascending: false })
 		.limit(50)
@@ -144,4 +149,20 @@ export const connectBroker = async (
 	const broker = new SupabaseBroker(roomId, playerId, isHost)
 	await broker.connect()
 	return broker
+}
+
+// Live room list. nq_rooms and nq_room_players are both in the supabase_realtime
+// publication, so room creation/closure and players coming and going all arrive
+// here. The callback re-reads the list rather than patching it locally, which
+// keeps the aggregate player counts honest. Returns an unsubscribe function.
+export const subscribeRooms = (onChange: () => void): (() => void) => {
+	const channel = getSupabase()
+		.channel('netquake:lobby')
+		.on('postgres_changes',
+			{ event: '*', schema: 'public', table: 'nq_rooms' }, () => onChange())
+		.on('postgres_changes',
+			{ event: '*', schema: 'public', table: 'nq_room_players' }, () => onChange())
+		.subscribe()
+
+	return () => { void channel.unsubscribe() }
 }

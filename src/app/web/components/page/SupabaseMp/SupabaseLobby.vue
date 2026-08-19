@@ -2,8 +2,8 @@
   <div class="sb-lobby">
     <h1>Peer-to-peer Multiplayer</h1>
     <p class="sub">
-      Rooms and signaling run on Supabase. Once connected, game traffic is
-      direct between players — it never passes through a server.
+      Rooms and signaling run on Supabase. Once connected, game traffic goes
+      direct between players and never passes through a server.
     </p>
 
     <p v-if="!store.available" class="err">
@@ -20,6 +20,30 @@
       </section>
 
       <template v-else-if="!store.room">
+        <section class="panel rooms">
+          <h2>
+            Open games
+            <span class="live" :class="{ on: live }">{{ live ? 'live' : 'offline' }}</span>
+          </h2>
+
+          <p v-if="!openRooms.length" class="muted">
+            Nobody is hosting right now. Start a game below and it will appear
+            here for everyone else.
+          </p>
+
+          <ul v-else>
+            <li v-for="r in openRooms" :key="r.id">
+              <div class="who">
+                <strong>{{ r.name }}</strong>
+                <span class="muted">{{ r.map }} · {{ count(r) }}/{{ r.max_players }} players</span>
+              </div>
+              <button :disabled="busy || count(r) >= r.max_players" @click="joinRoom(r)">
+                {{ count(r) >= r.max_players ? 'Full' : 'Join' }}
+              </button>
+            </li>
+          </ul>
+        </section>
+
         <section class="panel">
           <h2>Host a game</h2>
           <input v-model="roomName" maxlength="30" placeholder="room name" />
@@ -29,34 +53,24 @@
           <button :disabled="busy" @click="host">Host</button>
         </section>
 
-        <section class="panel">
-          <h2>Join by code</h2>
-          <input v-model="code" maxlength="5" placeholder="ABCDE" @keyup.enter="join" />
-          <button :disabled="busy" @click="join">Join</button>
-        </section>
-
-        <section class="panel">
-          <h2>Open rooms <button class="link" @click="refresh">refresh</button></h2>
-          <p v-if="!openRooms.length" class="muted">No open rooms.</p>
-          <ul v-else>
-            <li v-for="r in openRooms" :key="r.id">
-              <strong>{{ r.name }}</strong>
-              <span class="muted">{{ r.map }} · {{ r.code }}</span>
-              <button :disabled="busy" @click="joinRoom(r.code)">Join</button>
-            </li>
-          </ul>
+        <section class="panel secondary">
+          <button class="link" @click="showCode = !showCode">
+            {{ showCode ? 'Hide' : 'Join by code instead' }}
+          </button>
+          <div v-if="showCode" class="code-entry">
+            <input v-model="code" maxlength="5" placeholder="ABCDE" @keyup.enter="joinByCode" />
+            <button :disabled="busy" @click="joinByCode">Join</button>
+          </div>
         </section>
       </template>
 
       <section v-else class="panel">
         <h2>{{ store.room.name }}</h2>
-        <p>
-          Share this code: <strong class="code">{{ store.room.code }}</strong>
-        </p>
         <p class="muted">
           Map {{ store.room.map }} · {{ store.isHost ? 'you are hosting' : 'joined' }}
           · {{ store.players.length }} player(s)
         </p>
+        <p class="muted">Code <strong class="code">{{ store.room.code }}</strong></p>
         <button :disabled="busy" @click="launch">
           {{ store.isHost ? 'Start game' : 'Enter game' }}
         </button>
@@ -67,10 +81,10 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSupabaseRoomStore } from '../../../stores/supabaseRoom'
-import type { Room } from '../../../../../shared/supabase/rooms'
+import { playerCount, subscribeRooms, type Room } from '../../../../../shared/supabase/rooms'
 
 const router = useRouter()
 const store = useSupabaseRoomStore()
@@ -80,34 +94,49 @@ const roomName = ref('')
 const code = ref('')
 const map = ref('e1m1')
 const busy = ref(false)
+const live = ref(false)
+const showCode = ref(false)
 const openRooms = ref<Room[]>([])
 
-// Shareware episode 1 only: these are the maps every player is guaranteed to
-// have, since pak1 is not distributed.
+let unsubscribe: (() => void) | null = null
+
+// Shareware episode 1 and its deathmatch maps: the only ones every player is
+// guaranteed to have, since pak1 is not distributed.
 const maps = ['e1m1', 'e1m2', 'e1m3', 'e1m4', 'e1m5', 'e1m6', 'e1m7', 'e1m8', 'dm1', 'dm2', 'dm3']
+
+const count = (r: Room) => playerCount(r)
 
 const run = async (fn: () => Promise<unknown>) => {
   busy.value = true
   try { await fn() } catch { /* surfaced via store.error */ } finally { busy.value = false }
 }
 
+const refresh = async () => { openRooms.value = await store.list() }
+
 const signIn = () => run(async () => {
   await store.signIn(name.value || 'player')
   await refresh()
+  watchRooms()
 })
 
-const refresh = () => run(async () => { openRooms.value = await store.list() })
+// nq_rooms and nq_room_players are both published to Realtime, so the list
+// reflects hosts appearing and players joining without anyone hitting refresh.
+const watchRooms = () => {
+  if (unsubscribe) return
+  unsubscribe = subscribeRooms(() => { void refresh() })
+  live.value = true
+}
 
 const host = () => run(async () => {
   await store.host(roomName.value || `${store.playerName}'s game`, map.value)
 })
 
-const join = () => run(() => store.join(code.value))
-const joinRoom = (c: string) => run(() => store.join(c))
-const leave = () => run(() => store.leave())
+const joinRoom = (r: Room) => run(() => store.joinRoom(r))
+const joinByCode = () => run(() => store.join(code.value))
+const leave = () => run(async () => { await store.leave(); await refresh() })
 
 // Mirrors the legacy room flow: the host listens, everyone else dials the
-// magic room address that routes through the injected broker.
+// magic room address, which routes through the injected broker.
 const launch = () => {
   const query: Record<string, string> = store.isHost
     ? { '-listen': '16', '+map': store.room!.map }
@@ -115,20 +144,34 @@ const launch = () => {
   router.push({ path: '/mp/quake', query })
 }
 
-onMounted(() => { if (store.playerId) void refresh() })
+onMounted(() => {
+  if (store.playerId) { void refresh(); watchRooms() }
+})
+
+onUnmounted(() => {
+  unsubscribe?.()
+  unsubscribe = null
+  live.value = false
+})
 </script>
 
 <style lang="scss" scoped>
 .sb-lobby { max-width: 760px; margin: 0 auto; padding: 32px 24px; }
 .sub { opacity: 0.75; margin-bottom: 24px; }
 .panel { border: 1px solid rgba(128,128,128,0.35); padding: 16px; margin-bottom: 16px; }
-.panel h2 { margin: 0 0 12px; font-size: 1rem; text-transform: uppercase; }
+.panel h2 { margin: 0 0 12px; font-size: 1rem; text-transform: uppercase; display: flex; gap: 10px; align-items: center; }
 .panel input, .panel select { margin-right: 8px; padding: 6px 8px; }
+.panel.secondary { border-style: dashed; opacity: 0.85; }
+.rooms li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(128,128,128,0.2); }
+.rooms li:last-child { border-bottom: none; }
+.who { display: flex; flex-direction: column; }
+.live { font-size: 0.7rem; opacity: 0.6; text-transform: uppercase; }
+.live.on { color: #5cb85c; opacity: 1; }
 .err { color: #d9534f; }
 .muted { opacity: 0.7; }
-.code { letter-spacing: 3px; font-size: 1.4rem; }
+.code { letter-spacing: 3px; font-size: 1.2rem; }
+.code-entry { margin-top: 10px; }
 button { padding: 6px 14px; cursor: pointer; }
-button.link { background: none; border: none; text-decoration: underline; }
-ul { list-style: none; padding: 0; }
-li { display: flex; gap: 12px; align-items: center; padding: 6px 0; }
+button.link { background: none; border: none; text-decoration: underline; padding: 0; }
+ul { list-style: none; padding: 0; margin: 0; }
 </style>
