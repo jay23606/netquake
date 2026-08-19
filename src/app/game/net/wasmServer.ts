@@ -347,7 +347,7 @@ let wasmModule: WebAssembly.Module | null = null;   // compiled once; instantiat
 export async function init() {
   if (wasmModule == null) {
     // Cache-bust: a plain reload would serve stale browser-cached sim.wasm bytes.
-    const bytes = await fetch('/wasm-sim/build/sim.wasm?t=' + Date.now(), { cache: 'no-store' }).then((r) => r.arrayBuffer());
+    const bytes = await fetch(`${import.meta.env.BASE_URL}wasm-sim/sim.wasm?t=${Date.now()}`, { cache: 'no-store' }).then((r) => r.arrayBuffer());
     wasmModule = await WebAssembly.compile(bytes);
   }
   const inst = await WebAssembly.instantiate(wasmModule, hostImports());

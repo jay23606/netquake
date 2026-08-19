@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rimraf ./dist && vue-tsc -p tsconfig.app.json --noEmit && vite build && tsc -p tsconfig.node.json",
     "build:justserver": "rimraf ./dist && tsc -p tsconfig.node.json",
-    "build:sim": "cd wasm-sim && asc assembly/index.ts --target release -o build/sim.wasm",
+    "build:sim": "cd wasm-sim && asc assembly/index.ts --target release -o ../static/wasm-sim/sim.wasm",
     "typecheck": "vue-tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1",
     "serve": "vite serve",

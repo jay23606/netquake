@@ -161,10 +161,17 @@ export const useMapsStore = defineStore('maps', {
       }
       return pkg
     },
-    loadMapListing () { 
+    loadMapListing () {
       if (!mapListingPromise) {
+        // The custom-map index came from the netquake.io room server, which this
+        // static build has no equivalent for. Degrade to an empty catalogue
+        // rather than leaving an unhandled rejection in the console.
         mapListingPromise = axios.get<QuaddictedMap[]>(quaddictedMapsUrl)
           .then(response => this.setMapListing(response.data))
+          .catch(() => {
+            console.info('[maps] no custom-map index available; catalogue is empty')
+            this.setMapListing([])
+          })
       }
       return mapListingPromise
     },

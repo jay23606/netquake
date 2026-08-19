@@ -33,3 +33,6 @@ mg3
 
 # local env
 .env.local
+
+# built by npm run build:sim (produced in CI, not committed)
+static/wasm-sim/
