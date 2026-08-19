@@ -19,18 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-
       - run: npm ci
-
-      # Supabase config comes from the committed .env.production; the anon key
-      # is public by design and ships in the bundle either way.
       - run: npx vite build
-
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/app
