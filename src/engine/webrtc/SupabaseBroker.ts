@@ -48,6 +48,11 @@ export class SupabaseBroker
 	private handlersAttached = false
 	private flushScheduled = false
 
+	// Role and room in every line: comparing two consoles is the fastest way to
+	// spot peers that think they are in different rooms.
+	private log = (msg: string) =>
+		dbg(`[${this.isHost ? 'host' : 'client'}][${this.roomId.slice(0, 8)}] ${msg}`)
+
 	constructor(roomId: string, playerId: string, isHost: boolean) {
 		super()
 		this.roomId = roomId
@@ -74,7 +79,7 @@ export class SupabaseBroker
 		channel.on('presence', { event: 'leave' }, ({ key }: { key: string }) => {
 			if (key === this.playerId || !this.knownPeers.has(key)) return
 			this.knownPeers.delete(key)
-			dbg(`Supabase: peer ${key} left the room\n`)
+			this.log(`peer ${key} left the room\n`)
 			this.emit('peerLost', { clientId: key, reason: 'left the room' })
 		})
 
@@ -93,7 +98,7 @@ export class SupabaseBroker
 			})
 		})
 
-		dbg(`Supabase: signaling connected to room ${this.roomId}\n`)
+		this.log(`signaling connected to room ${this.roomId}\n`)
 		this.emit('greeting', { gameName: 'netquake' })
 	}
 
@@ -116,7 +121,7 @@ export class SupabaseBroker
 			this.handlersAttached = true
 			const queued = this.pending
 			this.pending = []
-			if (queued.length) dbg(`replaying ${queued.length} buffered signal(s)`)
+			if (queued.length) this.log(`replaying ${queued.length} buffered signal(s)`)
 			queued.forEach((s) => this.dispatch(s))
 		})
 	}
@@ -125,7 +130,7 @@ export class SupabaseBroker
 		if (!signal || signal.from === this.playerId) return
 		if (signal.to !== null && signal.to !== this.playerId) return
 
-		dbg(`Supabase: received ${signal.type} from ${signal.from}\n`)
+		this.log(`received ${signal.type} from ${signal.from}\n`)
 
 		switch (signal.type) {
 			case 'ready':
@@ -176,10 +181,10 @@ export class SupabaseBroker
 
 	private send = (type: SignalType, to: string | null, data?: string) => {
 		if (!this.channel) {
-			dbg(`Supabase: dropped ${type} -- signaling not connected\n`)
+			this.log(`dropped ${type} -- signaling not connected\n`)
 			return
 		}
-		dbg(`Supabase: sending ${type} to ${to ?? 'room'}\n`)
+		this.log(`sending ${type} to ${to ?? 'room'}\n`)
 		void this.channel.send({
 			type: 'broadcast',
 			event: SIGNAL_EVENT,
@@ -203,6 +208,6 @@ export class SupabaseBroker
 		void this.channel.unsubscribe()
 		this.channel = null
 		this.knownPeers.clear()
-		dbg('Supabase: signaling closed\n')
+		this.log('signaling closed')
 	}
 }
