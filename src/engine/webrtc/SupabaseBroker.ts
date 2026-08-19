@@ -40,6 +40,14 @@ export class SupabaseBroker
 	private readonly isHost: boolean
 	private knownPeers = new Set<string>()
 
+	// Realtime broadcast has no replay, and webrtc.ts only attaches its handlers
+	// when the engine boots at /mp/quake -- which can be well after this channel
+	// went live in the lobby. Anything arriving in that gap would be emitted to
+	// nobody, so it is buffered and flushed once handlers exist.
+	private pending: Signal[] = []
+	private handlersAttached = false
+	private flushScheduled = false
+
 	constructor(roomId: string, playerId: string, isHost: boolean) {
 		super()
 		this.roomId = roomId
@@ -89,7 +97,31 @@ export class SupabaseBroker
 		this.emit('greeting', { gameName: 'netquake' })
 	}
 
+	// Buffers until webrtc.ts has attached its handlers, then hands over.
 	private onSignal = (signal: Signal) => {
+		if (!this.handlersAttached) {
+			this.pending.push(signal)
+			return
+		}
+		this.dispatch(signal)
+	}
+
+	// initBroker registers several handlers in one synchronous run, so the flush
+	// is deferred a microtask to let all of them land before replaying.
+	on = <K extends keyof MessageEvents>(event: K, listener: MessageEvents[K]) => {
+		super.on(event, listener)
+		if (this.flushScheduled) return
+		this.flushScheduled = true
+		queueMicrotask(() => {
+			this.handlersAttached = true
+			const queued = this.pending
+			this.pending = []
+			if (queued.length) dbg(`replaying ${queued.length} buffered signal(s)`)
+			queued.forEach((s) => this.dispatch(s))
+		})
+	}
+
+	private dispatch = (signal: Signal) => {
 		if (!signal || signal.from === this.playerId) return
 		if (signal.to !== null && signal.to !== this.playerId) return
 
