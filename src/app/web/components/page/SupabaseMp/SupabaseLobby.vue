@@ -238,8 +238,12 @@ const host = () => run(async () => {
   await store.host(roomName.value || `${store.playerName}'s game`, map.value)
 })
 
-const joinRoom = (r: Room) => run(() => store.joinRoom(r))
-const joinByCode = () => run(() => store.join(code.value))
+// Joining a match already in progress goes straight in: the status watcher only
+// fires on the transition into 'in-game', so a late joiner would otherwise sit
+// in the lobby watching a game they had already joined.
+const enterIfRunning = () => { if (store.room?.status === 'in-game') enterGame() }
+const joinRoom = (r: Room) => run(async () => { await store.joinRoom(r); enterIfRunning() })
+const joinByCode = () => run(async () => { await store.join(code.value); enterIfRunning() })
 const leave = () => run(async () => { await store.leave(); await refresh() })
 const kick = (id: string) => run(() => store.kick(id))
 const ban = (id: string) => run(() => store.ban(id))
@@ -257,9 +261,17 @@ const say = () => {
 // which routes through the broker the app injected.
 const gameQuery = (): Record<string, string> => {
   const s = store.room?.game_settings ?? defaultGameSettings()
+  const me = store.players.find((p: RoomPlayer) => p.player_id === store.playerId)
+  // _cl_color packs the two Quake colour slots as (top << 4) | bottom; the
+  // lobby offers one swatch, so both slots get it.
+  const c = me?.color ?? 0
   const rules: Record<string, string> = {
     '+fraglimit': String(s.fragLimit ?? 0),
     '+timelimit': String(s.timeLimit ?? 0),
+    '+_cl_color': String((c << 4) | c),
+    // The command line is space-joined and unquoted, so a name with spaces
+    // would split into extra arguments.
+    '+_cl_name': (store.playerName || 'player').replace(/\s+/g, '_'),
   }
   if (!store.isHost) return { '-connect': 'rtc://netquake.io/room', ...rules }
   return {
