@@ -952,6 +952,11 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
   let configAutosaveTimer: ReturnType<typeof setTimeout> | null = null;
   let writeConfigurationNow: () => boolean = () => false;
   const printToConsole = (line: string): void => {
+    // Mirror the in-game console into devtools. The engine reports connection
+    // progress and failures ("Connecting to...", "Bad server address", map
+    // errors) only to its own console, which is invisible while the menu is up.
+    console.log("[q2-engine]", line.trimEnd());
+
     if (shouldSuppressWebAppConsoleLine(line)) {
       return;
     }

@@ -124,6 +124,7 @@ export async function startWebRtcSession(
         transport.setHostChannel(channel);
         // Nothing happens until the engine is told to connect; before the
         // channel is open the packets would go nowhere.
+        log("issuing: connect " + HOST_ADDRESS);
         runCommand("connect " + HOST_ADDRESS + "\n");
       });
       const offer = await pc.createOffer();
