@@ -2620,6 +2620,11 @@ function frame(time: number, runtime: WebAppRuntime, page: WebAppPage): void {
   runtime.lastFrameTime = time;
   runtime.client.cls.realtime = time;
   executeRuntimeCommandBuffer(runtime, page);
+  // Per frame, not only on key events. A client that joins over the network
+  // reaches ca_active with no key pressed, and every other caller of this is a
+  // keyboard handler -- so without this the menu stayed up over a running match
+  // until the player happened to press something.
+  syncWebAppKeyDestination(runtime, page);
   if (runtime.shouldPumpAuthoritativeFrame()) {
     runtime.pumpAuthoritativeFrame(delta);
   } else {
