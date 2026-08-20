@@ -186,6 +186,13 @@ import { useRouter } from 'vue-router'
 import { useSupabaseRoomStore } from '../../../stores/supabaseRoom'
 import { useGameStore } from '../../../stores/game'
 import {
+  Q1_SHAREWARE_MAPS,
+  Q1_RETAIL_MAPS,
+  Q1_LIBREQUAKE_MAPS,
+  Q1_LIBREQUARTZ_MAPS,
+  Q2_MAPS,
+} from '../../../../../shared/quakeMaps'
+import {
   playerCount, hostName, subscribeRooms, leaveRoomOnUnload,
   defaultGameSettings, hasExistingSession,
   type Room, type RoomPlayer, type ChatMessage, type GameId,
@@ -224,36 +231,8 @@ const chatBox = ref<HTMLElement | null>(null)
 const openRooms = ref<Room[]>([])
 let unsubscribe: (() => void) | null = null
 
-// Each engine only ships the maps in its own data. Every shareware Quake 1 map
-// carries deathmatch spawn points, including the start hub, which is small
-// enough to play well with two. Quake 2's demo pak holds exactly three.
-const Q1_SHAREWARE_MAPS = [
-  'e1m1', 'e1m2', 'e1m3', 'e1m4', 'e1m5', 'e1m6', 'e1m7', 'e1m8', 'start',
-] as const
-// dm1-dm3 ship in pak1, the registered data, so offering them unconditionally
-// created rooms a shareware player could never load. They appear only once this
-// browser has a copy of pak1 uploaded.
-const Q1_RETAIL_MAPS = ['dm1', 'dm2', 'dm3'] as const
-// LibreQuake's own levels, under the BSD licence, shipped as loose .bsp files
-// rather than a second game dir -- Quake embeds a map's textures in the BSP, so
-// each one is self-contained. They are deathmatch-only: they place hell
-// knights, whose model lives in pak1, and Quake removes monsters before
-// precaching only when deathmatch is set. Under coop they would fail to load.
-const Q1_LIBREQUAKE_MAPS = [
-  'lq_e0m1', 'lq_e0m2', 'lq_e0m3', 'lq_e0m4',
-  'lq_e0m5', 'lq_e0m6', 'lq_e0m7', 'lq_e0m8',
-] as const
-// LibreQuartz, a second libre Quake project, also BSD-3-Clause. Same loose-BSP
-// treatment and the same deathmatch-only rule: `box` places monsters whose
-// models ship in pak1. The rest are clean, but they share the one gate so
-// there is a single rule covering every added map.
-const Q1_LIBREQUARTZ_MAPS = [
-  'am1', 'box', 'bunkers', 'house', 'nsa', 'office',
-  'void1', 'void2', 'void3', 'void4', 'void5', 'void6',
-] as const
-
-const Q2_MAPS = ['demo1', 'demo2', 'demo3'] as const
-
+// Map lists live in shared/quakeMaps so the end-of-match vote can agree with
+// this picker on exactly which maps exist.
 const settings = reactive({ ...defaultGameSettings(), map: 'e1m1' })
 
 const game = ref<GameId>(prefs.game ?? 'q1')

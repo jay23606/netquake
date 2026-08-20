@@ -4,6 +4,7 @@
     <Game v-else :quitRequest="model.isQuitting" @quit="gameQuit" />
     <VoiceToggle v-if="!needsPak" />
     <MatchRecorder v-if="!needsPak" />
+    <MapVote v-if="!needsPak" />
   </div>
 </template>
 
@@ -14,6 +15,7 @@ import Game from '../Game/Game.vue'
 import PakLoader from '../Game/PakLoader.vue'
 import VoiceToggle from './VoiceToggle.vue'
 import MatchRecorder from './MatchRecorder.vue'
+import MapVote from './MapVote.vue'
 import { useSupabaseRoomStore } from '../../../stores/supabaseRoom'
 
 // The Supabase counterpart to the old RoomGameLauncher. It deliberately does
