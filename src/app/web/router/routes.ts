@@ -12,6 +12,7 @@ import GameLauncher from '../components/page/Game/GameLauncher.vue'
 import SharewareLicense from '../components/page/SharewareLicense.vue'
 import Frontend from '../components/layout/Layout.vue'
 import SupabaseLobby from '../components/page/SupabaseMp/SupabaseLobby.vue'
+import Leaderboard from '../components/page/Leaderboard.vue'
 import SupabaseGameLauncher from '../components/page/SupabaseMp/SupabaseGameLauncher.vue'
 
 const routes: RouteRecordRaw[] = [
@@ -25,7 +26,8 @@ const routes: RouteRecordRaw[] = [
       { name: 'setup', path: '/setup', component: Setup },
       { name: 'faq', path: '/faq', component: Faq },
       { name: "slicnse", path: "/slicnse", component: SharewareLicense },
-      { name: "sb-multiplayer", path: "/mp", component: SupabaseLobby }
+      { name: "sb-multiplayer", path: "/mp", component: SupabaseLobby },
+      { name: "leaderboard", path: "/leaderboard", component: Leaderboard }
     ]
   },
   {

@@ -1,6 +1,7 @@
 <template>
   <div class="sb-lobby">
     <h1>Peer-to-peer Multiplayer</h1>
+    <p class="sub"><router-link to="/leaderboard">View the leaderboard</router-link></p>
     <p class="sub">
       Rooms and signaling run on Supabase. Once connected, game traffic goes
       direct between players and never passes through a server.
