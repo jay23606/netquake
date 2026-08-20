@@ -18,6 +18,8 @@ export interface WebRtcSessionParams {
   /** Map the host loads; ignored on the joining side, which is told by the server. */
   map: string;
   maxClients: number;
+  /** Lobby name, so the player is the same person in both games. */
+  name: string;
 }
 
 export interface WebRtcSession {
@@ -40,7 +42,8 @@ export function readSessionParams(
     playerId,
     isHost: q.get("host") === "1",
     map: q.get("map") ?? "demo1",
-    maxClients: Number(q.get("max") ?? "8")
+    maxClients: Number(q.get("max") ?? "8"),
+    name: q.get("name") ?? "player"
   };
 }
 

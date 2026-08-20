@@ -1801,6 +1801,11 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
   // Multiplayer: the engine otherwise boots to its main menu and waits. The
   // host starts a listen server; the joining side connects instead, but only
   // once its data channel is open (see webrtc-session).
+  // Carry the lobby identity into Quake 2, which keeps its own name cvar and
+  // would otherwise show everyone as the default player.
+  if (rtcSession) {
+    Cbuf_AddText(cmd, `set name "${rtcSession.name}"\n`);
+  }
   if (rtcSession?.isHost) {
     Cbuf_AddText(cmd, "set deathmatch 1\n");
     Cbuf_AddText(cmd, `set maxclients ${rtcSession.maxClients}\n`);

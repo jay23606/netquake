@@ -364,6 +364,8 @@ const enterGame = () => {
       host: store.isHost ? '1' : '0',
       map: room.map,
       max: String(room.max_players),
+      // Quake 2 keeps its own name cvar; without this it plays as the default.
+      name: (store.playerName || 'player').replace(/\s+/g, '_'),
     })
     leavingForGame = true
     window.location.href = `${import.meta.env.BASE_URL}q2/?${q.toString()}`
