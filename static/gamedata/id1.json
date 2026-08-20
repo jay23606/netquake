@@ -3,6 +3,18 @@
     "fileName": "id1/pak0.pak"
   },
   {
+    "fileName": "id1/maps/am1.bsp"
+  },
+  {
+    "fileName": "id1/maps/box.bsp"
+  },
+  {
+    "fileName": "id1/maps/bunkers.bsp"
+  },
+  {
+    "fileName": "id1/maps/house.bsp"
+  },
+  {
     "fileName": "id1/maps/lq_e0m1.bsp"
   },
   {
@@ -25,5 +37,29 @@
   },
   {
     "fileName": "id1/maps/lq_e0m8.bsp"
+  },
+  {
+    "fileName": "id1/maps/nsa.bsp"
+  },
+  {
+    "fileName": "id1/maps/office.bsp"
+  },
+  {
+    "fileName": "id1/maps/void1.bsp"
+  },
+  {
+    "fileName": "id1/maps/void2.bsp"
+  },
+  {
+    "fileName": "id1/maps/void3.bsp"
+  },
+  {
+    "fileName": "id1/maps/void4.bsp"
+  },
+  {
+    "fileName": "id1/maps/void5.bsp"
+  },
+  {
+    "fileName": "id1/maps/void6.bsp"
   }
 ]

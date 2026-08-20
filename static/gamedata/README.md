@@ -38,3 +38,25 @@ full in `LIBREQUAKE-COPYING.txt`, as that licence requires.
 only when the game type is deathmatch.
 
 Source: https://github.com/lavenderdotpet/LibreQuake
+
+## LibreQuartz deathmatch maps
+
+`id1/maps/{am1,box,bunkers,house,nsa,office,void1..void6}.bsp` — twelve levels
+from LibreQuartz, a second libre Quake project, also BSD-3-Clause. Its notice is
+reproduced in `LIBREQUARTZ-COPYING.txt`. Only the `.bsp` files are taken, on the
+same reasoning as LibreQuake: the maps carry their own textures, so nothing else
+from the project is needed and no GPL-licensed QuakeC comes with them.
+
+Screened before inclusion: all are BSP29 (the format this engine reads -- the
+extended BSP2 that many modern community maps use would not load), all carry
+deathmatch spawn points (4 to 24 each), and every entity they place resolves
+against the shareware progs and models. `light_globe` and `trigger_hurt` look
+foreign only because id's episode 1 never used them; both are stock.
+
+`vtest` and LibreQuartz's own `start` are deliberately not included -- the first
+is a test map, the second would collide with id's `start`.
+
+Grouped with the LibreQuake maps under the same deathmatch-only gate, because
+`box` places hell knights and shalraths whose models ship in pak1.
+
+Source: https://github.com/scaryguy334/LibreQuartz

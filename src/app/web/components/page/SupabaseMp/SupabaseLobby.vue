@@ -242,6 +242,15 @@ const Q1_LIBREQUAKE_MAPS = [
   'lq_e0m1', 'lq_e0m2', 'lq_e0m3', 'lq_e0m4',
   'lq_e0m5', 'lq_e0m6', 'lq_e0m7', 'lq_e0m8',
 ] as const
+// LibreQuartz, a second libre Quake project, also BSD-3-Clause. Same loose-BSP
+// treatment and the same deathmatch-only rule: `box` places monsters whose
+// models ship in pak1. The rest are clean, but they share the one gate so
+// there is a single rule covering every added map.
+const Q1_LIBREQUARTZ_MAPS = [
+  'am1', 'box', 'bunkers', 'house', 'nsa', 'office',
+  'void1', 'void2', 'void3', 'void4', 'void5', 'void6',
+] as const
+
 const Q2_MAPS = ['demo1', 'demo2', 'demo3'] as const
 
 const settings = reactive({ ...defaultGameSettings(), map: 'e1m1' })
@@ -257,7 +266,9 @@ const maps = computed<readonly string[]>(() => {
   return [
     ...Q1_SHAREWARE_MAPS,
     ...(hasPak1.value ? Q1_RETAIL_MAPS : []),
-    ...(settings.gameType === 'deathmatch' ? Q1_LIBREQUAKE_MAPS : []),
+    ...(settings.gameType === 'deathmatch'
+      ? [...Q1_LIBREQUAKE_MAPS, ...Q1_LIBREQUARTZ_MAPS]
+      : []),
   ]
 })
 
