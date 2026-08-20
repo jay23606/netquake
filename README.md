@@ -25,6 +25,7 @@ kept in IndexedDB in your browser and never uploaded anywhere.
 | Your own retail data | working (`pak1.pak`) | working (`pak0.pak`) |
 | Peer-to-peer multiplayer | working | working |
 | Shared lobby | working | working |
+| Deathmatch maps | 29 (9 shareware + 20 added) | 3 (demo) |
 
 Both engines are confirmed playing peer-to-peer between two browsers: anonymous
 sign-in, hosting and joining, SDP and ICE crossing a Supabase broadcast channel,
@@ -33,12 +34,11 @@ it — `getchallenge`, `connect`, configstrings, baselines, `entered the game`.
 
 ### Known issues
 
-- **Quake 2**: after dying and respawning, the joining player has no weapon and
-  cannot shoot. Under investigation.
-- Quake 2 still logs diagnostics (`[q2-render]`, `[q2-touch]`, and a filtered
-  mirror of the engine console) that should be removed.
 - STUN only. Peers behind symmetric NAT will not connect; a TURN relay goes in
   `VITE_ICE_SERVERS` if that matters.
+- The added Quake 1 maps are deathmatch only — see **Game data** for why.
+- Quake 2 on demo data draws opponents with a monster model, since the demo
+  pak has no player models at all.
 
 ## Architecture
 
@@ -92,8 +92,11 @@ use a private window, another browser, or the **change name** control.
 
 ### Not carried over from upstream
 
-- A custom/Quaddicted map picker. The index it used has no equivalent here, and
-  the index is not CORS-readable, so it would need a proxy.
+- A custom/Quaddicted map picker. The browser itself is still in the tree, but
+  it pointed at the old room server’s `/api/maps`. The upstream archive is
+  still up, and its map downloads send no `Access-Control-Allow-Origin`, so a
+  browser on this origin cannot fetch them without a proxy — which would mean
+  running a server.
 - A server browser fed by a master server — Supabase rooms replace it.
 
 ## Game data
@@ -108,6 +111,46 @@ checked rather than taken on trust:
   entries, holding exactly three maps (`demo1`, `demo2`, `demo3`) and none of
   the roughly forty retail map names.
 
+### Added deathmatch maps
+
+Twenty more Quake 1 maps ship as loose `.bsp` files, all BSD-3-Clause:
+
+- **[LibreQuake](https://github.com/lavenderdotpet/LibreQuake)** — `lq_e0m1`–`lq_e0m8`.
+- **[LibreQuartz](https://github.com/scaryguy334/LibreQuartz)** — `am1`, `box`,
+  `bunkers`, `house`, `nsa`, `office`, `void1`–`void6`.
+
+With the nine shareware maps that is 29 in the deathmatch rotation. They are
+original levels rather than remakes — new geometry and new art, sharing only the
+handful of texture *names* Quake keys behaviour off (`trigger`, `clip`,
+`*water0`, `+0basebtn`). `void2` has 24 deathmatch spawn points, more than
+twice what any shareware map offers.
+
+They are loose files rather than a second game dir because Quake embeds a map’s
+textures in the BSP itself, so each map is self-contained at 1–2 MB instead of
+pulling in a 42 MB pak.
+
+Each was screened before inclusion rather than taken on trust:
+
+- **BSP29**, which is what this engine reads. The extended **BSP2** format that
+  much modern community mapping uses would not load at all.
+- **Deathmatch spawn points present** — between 4 and 24 each.
+- **Every entity resolves** against the shareware progs and models.
+  `light_globe`, `trigger_hurt`, `trigger_push` and `func_illusionary` look
+  foreign only because id’s episode 1 never used them; all are stock, and
+  `progs/s_light.spr` that `light_globe` needs does ship in `pak0`.
+
+They are **deathmatch only**. Some place monsters — hell knights, shalraths —
+whose models ship in retail `pak1`, and Quake removes monsters *before*
+precaching them only when `deathmatch` is set. Under co-op the map would die on
+a missing `progs/hknight.mdl`, so the lobby offers these maps for deathmatch
+only, and a room switched to co-op afterwards has its map reset rather than
+being left unloadable.
+
+Only the `.bsp` files are taken. Both projects’ art is BSD-3-Clause while their
+QuakeC and `progs.dat` are GPL-2, so leaving those behind keeps this data free
+of any GPL obligation. Both notices are reproduced in full under
+`static/gamedata/`, as that licence requires.
+
 Retail data is never included. Quake 1's `pak1.pak` and Quake 2's retail
 `pak0.pak` are added by players who own the games, and stay in their browser.
 
@@ -118,13 +161,20 @@ models. Upstream fills this gap with loose player skins named `brianna`,
 `doomgal` and `cobalt` — retail and mission-pack content, which is why they are
 not copied here.
 
+The substitute carries its own animation table, so the player frame numbers the
+server sends are remapped onto its equivalents. Without that a dead player lands
+on whatever pose happens to sit at that index — a mid-stride walk, in the
+soldier’s case — and corpses stand around looking alive. Ranges are scaled so
+the last player frame lands on the last substitute frame, because a death
+animation holds its final frame and that is the pose a corpse keeps.
+
 ## Running locally
 
 Requires Node 22+.
 
 ```bash
 npm install
-npx vite build
+npm run build
 ```
 
 Quake 2 is a separate workspace and builds into the same output tree, after
