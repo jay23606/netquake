@@ -223,7 +223,15 @@ export function CL_BuildRefreshFrame(
         const info = runtime.cl.clientinfo[snapshot.skinnum & 0xff];
         const path = info?.model_filename;
         if (path) {
-          rendered.resolvedModelPath = options.resolvePlayerModelPath?.(path) ?? path;
+          const resolved = options.resolvePlayerModelPath?.(path) ?? path;
+          rendered.resolvedModelPath = resolved;
+          // A substituted model has its own frame table, so the player frame
+          // indices the server sent mean something else in it -- remap them or
+          // a dead player holds whatever pose sits at that index.
+          if (options.remapPlayerFrame && resolved !== path) {
+            rendered.frame = options.remapPlayerFrame(resolved, rendered.frame);
+            rendered.oldframe = options.remapPlayerFrame(resolved, rendered.oldframe);
+          }
         }
       }
       entities.push(rendered);

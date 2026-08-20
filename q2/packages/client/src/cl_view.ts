@@ -122,6 +122,11 @@ export interface ClientViewOptions {
   gunModelOverride?: string | null;
   /** Maps a clientinfo player model path to one that exists locally. */
   resolvePlayerModelPath?: (path: string) => string;
+  /**
+   * Maps a player animation frame onto the substitute model's equivalent.
+   * Only consulted when the resolved path differs from the requested one.
+   */
+  remapPlayerFrame?: (substitutePath: string, frame: number) => number;
 }
 
 /**

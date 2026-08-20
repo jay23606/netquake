@@ -15,5 +15,15 @@
     "src/server/**/*.ts",
     "src/shared/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    // Browser-only: the Supabase client reads import.meta.env, which the
+    // CommonJS Node server build cannot compile. Peer-to-peer signalling
+    // replaced the Node room server, so it never references this code.
+    "src/shared/supabase/**/*.ts",
+    // Browser-only too (RTCPeerConnection); it is the sole importer of the
+    // Supabase client from inside src/engine.
+    "src/engine/webrtc/SupabaseBroker.ts"
+  ]
 }

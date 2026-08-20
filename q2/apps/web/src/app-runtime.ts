@@ -267,6 +267,10 @@ import {
 } from "../../../packages/renderer-three/src/index.js";
 import { createRefreshDebugLayer } from "./refresh-debug-layer.js";
 import {
+  PLAYER_MODEL_FALLBACK,
+  remapPlayerFrameToSubstitute
+} from "./player-model-substitute.js";
+import {
   createWebAppRenderLoop,
   type WebAppRenderLoop
 } from "./render-loop.js";
@@ -1241,7 +1245,6 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
   // back to a model the demo pak does contain, so opponents are at least
   // visible. Retail data added through the pak upload provides the real player
   // models and takes precedence, because the requested path then exists.
-  const PLAYER_MODEL_FALLBACK = "models/monsters/soldier/tris.md2";
   const resolveModelPath = (path: string): string => {
     if (!/^players\/.+\/tris\.md2$/i.test(path)) return path;
     if (readMountedFile(filesystem, path)) return path;
@@ -3193,7 +3196,8 @@ function drawGameFrame(runtime: WebAppRuntime, page: WebAppPage, deltaSeconds: n
   const source = createWebAppServerRenderSource(runtime.client, {
     cvar: runtime.menu.cvar,
     predictMovement: !runtime.serverHost.hasActiveAttractLoop(),
-    resolvePlayerModelPath: runtime.resolveModelPath
+    resolvePlayerModelPath: runtime.resolveModelPath,
+    remapPlayerFrame: remapPlayerFrameToSubstitute
   });
   syncThreeCameraToRefresh(renderer.camera, source.refreshFrame);
   const consoleCanvas = runtime.menu.keys.state.key_dest === keydest_t.key_console

@@ -38,6 +38,7 @@ export interface WebAppServerRenderSourceOptions {
   drawGun?: boolean;
   /** Maps a clientinfo player model path to one that exists locally. */
   resolvePlayerModelPath?: (path: string) => string;
+  remapPlayerFrame?: (substitutePath: string, frame: number) => number;
 }
 
 /**
@@ -75,7 +76,8 @@ export function createWebAppServerRenderSource(
     drawGun: options.drawGun ?? true,
     ...(options.resolvePlayerModelPath
       ? { resolvePlayerModelPath: options.resolvePlayerModelPath }
-      : {})
+      : {}),
+    ...(options.remapPlayerFrame ? { remapPlayerFrame: options.remapPlayerFrame } : {})
   });
 
   return {

@@ -14,13 +14,13 @@ header.flex.items-center.justify-between(class="px-6 md:px-12 h-12 xs:h-14")
       v-if="hasPak1"
       icon="fa-solid fa-circle-check"
       v-tippy
-      content="Full game loaded"
+      content="Quake 1: full game loaded"
     )
     button.pak1-icon.pak1-upload(
       v-else
       @click="gameStore.openPak1Modal()"
       v-tippy
-      content="Upload pak1.pak to unlock the full game"
+      content="Quake 1: upload pak1.pak to unlock all four episodes. Quake 2 data is added on the Quake 2 page."
     )
       font-awesome-icon(icon="fa-solid fa-upload")
     router-link.faq-icon(:to="{name: 'faq'}" v-tippy content="FAQ")

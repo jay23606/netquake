@@ -7,6 +7,7 @@
         font-awesome-icon(icon="fa-solid fa-xmark")
 
     .modal-body
+      p.modal-note Your name is used in both games. The other settings here apply to Quake 1.
       .modal-top-row
         //- Left: name + colors
         .col-left
@@ -198,6 +199,12 @@ onUnmounted(() => document.removeEventListener('keydown', cancelOnEsc))
     height: 100%;
     border: none;
   }
+}
+
+.modal-note {
+  margin: 0 24px 4px;
+  font-size: 12px;
+  opacity: 0.65;
 }
 
 .modal-header {
