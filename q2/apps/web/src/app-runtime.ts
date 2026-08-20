@@ -448,6 +448,12 @@ async function bootstrap(): Promise<void> {
     // exists at all -- a phone or tablet.
     const isTouchDevice = navigator.maxTouchPoints > 0
       && !window.matchMedia("(any-pointer: fine)").matches;
+    console.log("[q2-touch]", JSON.stringify({
+      maxTouchPoints: navigator.maxTouchPoints,
+      anyPointerFine: window.matchMedia("(any-pointer: fine)").matches,
+      pointerCoarse: window.matchMedia("(pointer: coarse)").matches,
+      attaching: isTouchDevice
+    }));
     runtime.mobileControls = isTouchDevice
       ? attachMobileTouchControls({
       root: page.root,
@@ -3086,6 +3092,7 @@ function restoreMenuOverlayFrameworkOrigins(origins: MenuOverlayFrameworkOrigin[
   }
 }
 
+let lastRenderDiagnosticAt = 0;
 /**
  * Original name: N/A
  * Source: N/A (web render orchestration)
@@ -3093,6 +3100,23 @@ function restoreMenuOverlayFrameworkOrigins(origins: MenuOverlayFrameworkOrigin[
  * Purpose: Feed authoritative client render data into the Three/ref_gl web-app renderer.
  */
 function drawGameFrame(runtime: WebAppRuntime, page: WebAppPage, deltaSeconds: number): void {
+  // Throttled: reports why nothing is being drawn while the app believes it is
+  // in a game. A renderer promise that never settles looks exactly like a
+  // renderer that failed, except no error is ever printed.
+  if (runtime.gameRenderer === null) {
+    const now = Date.now();
+    if (now - lastRenderDiagnosticAt > 2000) {
+      lastRenderDiagnosticAt = now;
+      console.log("[q2-render]", JSON.stringify({
+        mode: runtime.mode,
+        mapPath: getAuthoritativeMapPath(runtime),
+        rendererNull: true,
+        promisePending: runtime.gameRendererPromise !== null,
+        promiseMapPath: runtime.gameRendererPromiseMapPath,
+        clientState: runtime.client.cls.state
+      }));
+    }
+  }
   if (runtime.menu.keys.state.key_dest === keydest_t.key_console) {
     page.status.style.display = "none";
   }
