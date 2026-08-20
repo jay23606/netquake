@@ -22,6 +22,9 @@ export const defaultGameSettings = (): GameSettings => ({
 })
 
 export type RoomStatus = 'lobby' | 'in-game'
+
+// Which engine a room belongs to; one lobby serves both.
+export type GameId = 'q1' | 'q2'
 export type Room = {
 	// Populated by listRooms via an aggregate join; absent on single-row reads.
 	nq_room_players?: { count: number }[]
@@ -36,6 +39,7 @@ export type Room = {
 	max_players: number
 	is_open: boolean
 	status: RoomStatus
+	game: GameId
 	game_settings: GameSettings
 	created_at: string
 }
@@ -118,14 +122,15 @@ export const listRooms = async (): Promise<Room[]> => {
 }
 
 export const createRoom = async (
-	opts: { name: string, map?: string, maxPlayers?: number, hostId: string },
+	opts: { name: string, map?: string, maxPlayers?: number, hostId: string, game?: GameId },
 ): Promise<Room> => {
 	const supabase = getSupabase()
 	const room = {
 		code: makeCode(),
 		name: opts.name,
 		host_id: opts.hostId,
-		map: opts.map ?? 'e1m1',
+		game: opts.game ?? 'q1',
+		map: opts.map ?? (opts.game === 'q2' ? 'demo1' : 'e1m1'),
 		max_players: opts.maxPlayers ?? 8,
 	}
 

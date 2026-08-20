@@ -53,12 +53,12 @@ export const useSupabaseRoomStore = defineStore('supabaseRoom', {
       return rooms.listRooms()
     },
 
-    async host(name: string, map = 'e1m1') {
+    async host(name: string, map = 'e1m1', game: rooms.GameId = 'q1') {
       this.status = 'connecting'
       this.error = null
       try {
         if (!this.playerId) throw new Error('Not signed in')
-        this.room = await rooms.createRoom({ name, map, hostId: this.playerId })
+        this.room = await rooms.createRoom({ name, map, game, hostId: this.playerId })
         // Connect signaling before anyone can join, so no peer is missed.
         activeBroker = await rooms.connectBroker(this.room.id, this.playerId, true)
         this.players = await rooms.listRoomPlayers(this.room.id)

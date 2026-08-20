@@ -33,6 +33,7 @@
             <li v-for="r in openRooms" :key="r.id">
               <div class="who">
                 <strong>{{ r.name }}</strong>
+                <span class="tag game-tag">{{ r.game === "q2" ? "Quake 2" : "Quake 1" }}</span>
                 <span class="muted">
                   {{ hostOf(r) }} &middot; {{ r.map }} &middot;
                   {{ count(r) }}/{{ r.max_players }} players &middot; {{ age(r) }}
@@ -49,6 +50,10 @@
         <section class="panel">
           <h2>Host a game</h2>
           <input v-model="roomName" maxlength="30" placeholder="room name" />
+          <select v-model="game">
+            <option value="q1">Quake 1</option>
+            <option value="q2">Quake 2</option>
+          </select>
           <select v-model="map">
             <option v-for="m in maps" :key="m" :value="m">{{ m }}</option>
           </select>
@@ -168,7 +173,7 @@ import { useRouter } from 'vue-router'
 import { useSupabaseRoomStore } from '../../../stores/supabaseRoom'
 import {
   playerCount, hostName, subscribeRooms, leaveRoomOnUnload,
-  defaultGameSettings, type Room, type RoomPlayer, type ChatMessage,
+  defaultGameSettings, type Room, type RoomPlayer, type ChatMessage, type GameId,
 } from '../../../../../shared/supabase/rooms'
 
 const router = useRouter()
@@ -184,12 +189,21 @@ const showCode = ref(false)
 const chatDraft = ref('')
 const chatBox = ref<HTMLElement | null>(null)
 const openRooms = ref<Room[]>([])
-
 let unsubscribe: (() => void) | null = null
 
-// Shareware episode 1 and its deathmatch maps: the only ones every player is
-// guaranteed to have, since pak1 is not distributed.
-const maps = ['e1m1', 'e1m2', 'e1m3', 'e1m4', 'e1m5', 'e1m6', 'e1m7', 'e1m8', 'dm1', 'dm2', 'dm3']
+// Each engine only ships the maps in its own data. Quake 1 has the shareware
+// episode and its deathmatch maps; Quake 2's demo pak holds exactly three.
+const MAPS_BY_GAME = {
+  q1: ['e1m1', 'e1m2', 'e1m3', 'e1m4', 'e1m5', 'e1m6', 'e1m7', 'e1m8', 'dm1', 'dm2', 'dm3'],
+  q2: ['demo1', 'demo2', 'demo3'],
+} as const
+
+const game = ref<GameId>('q1')
+const maps = computed<readonly string[]>(() => MAPS_BY_GAME[game.value])
+
+// Switching engine must not leave an e1m1 selected for a Quake 2 room, which
+// would create a room nobody can load.
+watch(game, () => { map.value = maps.value[0] })
 
 // Quake's 14 player colours, approximated for the lobby swatches.
 const PALETTE = [
@@ -235,7 +249,7 @@ const watchRooms = () => {
 }
 
 const host = () => run(async () => {
-  await store.host(roomName.value || `${store.playerName}'s game`, map.value)
+  await store.host(roomName.value || `${store.playerName}'s game`, map.value, game.value)
 })
 
 // Joining a match already in progress goes straight in: the status watcher only
@@ -284,7 +298,21 @@ const gameQuery = (): Record<string, string> => {
   }
 }
 
-const enterGame = () => router.push({ path: '/mp/quake', query: gameQuery() })
+// Quake 2 is a separate application mounted at /q2/, not a Vue route, so
+// entering one leaves the router entirely and hands the session over in the URL.
+const enterGame = () => {
+  const room = store.room
+  if (room?.game === 'q2') {
+    const q = new URLSearchParams({
+      room: room.id,
+      player: store.playerId ?? '',
+      host: store.isHost ? '1' : '0',
+    })
+    window.location.href = `${import.meta.env.BASE_URL}q2/?${q.toString()}`
+    return
+  }
+  router.push({ path: '/mp/quake', query: gameQuery() })
+}
 
 // Host flips the room to in-game; the watcher below carries everyone in,
 // including the host, so nobody has to press Start for themselves.
@@ -299,7 +327,7 @@ const onUnload = () => {
 // time. Guarded so it only fires on the transition into 'in-game'.
 watch(() => store.room?.status, (now, before) => {
   if (now === 'in-game' && before && before !== 'in-game') {
-    router.push({ path: '/mp/quake', query: gameQuery() })
+    enterGame()
   }
 })
 
