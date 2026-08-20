@@ -246,6 +246,7 @@ import { createWebRtcTransport, type WebRtcTransport } from "./webrtc-transport.
 import { listUploadedPaks } from "./pak-storage.js";
 import { installPakUpload } from "./pak-upload.js";
 import { readSessionParams, startWebRtcSession } from "./webrtc-session.js";
+import { installVoiceControl } from "./voice-control.js";
 import {
   createWebAppServerHost,
   type WebAppServerHost
@@ -1213,6 +1214,9 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
       })
     : createWebAppLocalTransport(transportOptions);
   if (rtcSession) {
+    // Voice runs on its own mesh, independent of the game transport, so it
+    // is installed alongside the session rather than inside it.
+    installVoiceControl(rtcSession.roomId, rtcSession.playerId);
     void startWebRtcSession(rtcSession, localTransport as WebRtcTransport, (text) =>
       Cbuf_AddText(cmd, text)
     ).catch(

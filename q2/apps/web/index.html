@@ -29,6 +29,34 @@
       }
       .back-to-site:hover { opacity: 1; }
       body.pointer-locked .back-to-site { display: none; }
+      /* Top right, opposite the pak control. Stays visible under pointer
+         lock on purpose: it cannot be clicked then, but it is the only
+         indication of whether the mic is open, and M is the real control. */
+      .voice-control {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        z-index: 9999;
+        font: 12px/1 system-ui, sans-serif;
+        color: #cfcfcf;
+      }
+      .voice-control button {
+        font: inherit;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: inherit;
+        background: rgba(0, 0, 0, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 3px;
+        padding: 6px 10px;
+        cursor: pointer;
+      }
+      .voice-control button.muted { opacity: 0.6; }
+      .voice-control button.talking {
+        color: #7ad17a;
+        border-color: rgba(122, 209, 122, 0.6);
+        opacity: 1;
+      }
       /* Sits beside the back link, same visual weight. */
       .pak-upload {
         position: fixed;

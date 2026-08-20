@@ -2,6 +2,7 @@
   <div class="game-container">
     <PakLoader v-if="needsPak" @done="needsPak = false" />
     <Game v-else :quitRequest="model.isQuitting" @quit="gameQuit" />
+    <VoiceToggle v-if="!needsPak" />
   </div>
 </template>
 
@@ -10,6 +11,7 @@ import { reactive, ref } from 'vue'
 import { useRouter, onBeforeRouteLeave } from 'vue-router'
 import Game from '../Game/Game.vue'
 import PakLoader from '../Game/PakLoader.vue'
+import VoiceToggle from './VoiceToggle.vue'
 import { useSupabaseRoomStore } from '../../../stores/supabaseRoom'
 
 // The Supabase counterpart to the old RoomGameLauncher. It deliberately does
