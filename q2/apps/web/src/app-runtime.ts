@@ -989,7 +989,6 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
       console.log("[q2-engine]", trimmed);
     }
 
-
     if (shouldSuppressWebAppConsoleLine(line)) {
       return;
     }

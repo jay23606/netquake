@@ -223,19 +223,36 @@ const chatBox = ref<HTMLElement | null>(null)
 const openRooms = ref<Room[]>([])
 let unsubscribe: (() => void) | null = null
 
-// Each engine only ships the maps in its own data. Quake 1 has the shareware
-// episode and its deathmatch maps; Quake 2's demo pak holds exactly three.
-const MAPS_BY_GAME = {
-  q1: ['e1m1', 'e1m2', 'e1m3', 'e1m4', 'e1m5', 'e1m6', 'e1m7', 'e1m8', 'dm1', 'dm2', 'dm3'],
-  q2: ['demo1', 'demo2', 'demo3'],
-} as const
+// Each engine only ships the maps in its own data. Every shareware Quake 1 map
+// carries deathmatch spawn points, including the start hub, which is small
+// enough to play well with two. Quake 2's demo pak holds exactly three.
+const Q1_SHAREWARE_MAPS = [
+  'e1m1', 'e1m2', 'e1m3', 'e1m4', 'e1m5', 'e1m6', 'e1m7', 'e1m8', 'start',
+] as const
+// dm1-dm3 ship in pak1, the registered data, so offering them unconditionally
+// created rooms a shareware player could never load. They appear only once this
+// browser has a copy of pak1 uploaded.
+const Q1_RETAIL_MAPS = ['dm1', 'dm2', 'dm3'] as const
+const Q2_MAPS = ['demo1', 'demo2', 'demo3'] as const
 
 const game = ref<GameId>(prefs.game ?? 'q1')
-const maps = computed<readonly string[]>(() => MAPS_BY_GAME[game.value])
+
+const hasPak1 = computed(() =>
+  gameStore.assetMetas.some(a => a.game === 'id1' && a.fileName.toLowerCase() === 'pak1.pak')
+)
+
+const maps = computed<readonly string[]>(() => {
+  if (game.value !== 'q1') return Q2_MAPS
+  return hasPak1.value ? [...Q1_SHAREWARE_MAPS, ...Q1_RETAIL_MAPS] : Q1_SHAREWARE_MAPS
+})
 
 // Switching engine must not leave an e1m1 selected for a Quake 2 room, which
-// would create a room nobody can load.
-watch(game, () => { map.value = maps.value[0] })
+// would create a room nobody can load. The same guard covers a remembered map
+// that is no longer offered -- a returning player whose saved choice was a
+// retail map they have since stopped supplying pak1 for.
+watch(maps, (available) => {
+  if (!available.includes(map.value)) map.value = available[0]
+}, { immediate: true })
 
 // Quake's 14 player colours, approximated for the lobby swatches.
 const PALETTE = [
