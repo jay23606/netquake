@@ -463,12 +463,12 @@ select, select option { color: #111; background: #fff; }
 select { border: 1px solid rgba(0, 0, 0, 0.35); }
 /* Same reasoning as the dropdowns: these render on a light field, where the
    inherited grey was washed out. Placeholders stay lighter, but readable. */
-.panel input[type="text"],
-.panel input[type="number"],
-.panel input:not([type]) {
+.sb-lobby input[type="text"],
+.sb-lobby input[type="number"],
+.sb-lobby input:not([type]) {
   color: #111;
   background: #fff;
   border: 1px solid rgba(0, 0, 0, 0.35);
 }
-.panel input::placeholder { color: #6b6b6b; opacity: 1; }
+.sb-lobby input::placeholder { color: #444; opacity: 1; }
 </style>
