@@ -442,7 +442,14 @@ async function bootstrap(): Promise<void> {
     const runtime = createWebAppRuntime(filesystem, page);
     page.status.textContent = "Initialisation du renderer frontend...";
     await ensureWebAppFrontendRenderer(runtime, page);
-    runtime.mobileControls = attachMobileTouchControls({
+    // Touch controls are attached unconditionally upstream, with only their
+    // activity gated -- so on a desktop they appear the moment gameplay starts
+    // and their pointer handling throws InvalidStateError against a mouse.
+    // Attach them only where they are actually usable.
+    const isTouchDevice = navigator.maxTouchPoints > 0
+      && window.matchMedia("(pointer: coarse)").matches;
+    runtime.mobileControls = isTouchDevice
+      ? attachMobileTouchControls({
       root: page.root,
       isGameplayActive: () => runtime.mode === "game"
         && runtime.menu.keys.state.key_dest === keydest_t.key_game
@@ -468,7 +475,8 @@ async function bootstrap(): Promise<void> {
       onInteract: () => {
         void runtime.audio.unlock();
       }
-    });
+    })
+      : null;
     void runtime.audio.unlock();
 
     resizeCanvas(page);
