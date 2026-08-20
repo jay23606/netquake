@@ -240,6 +240,8 @@ import { registerWebConfigCommands } from "./web-config-commands.js";
 import { mapWebAppDomKey } from "./keymap.js";
 import { createWebAppLocalTransport } from "./local-transport.js";
 import { createWebRtcTransport, type WebRtcTransport } from "./webrtc-transport.js";
+import { listUploadedPaks } from "./pak-storage.js";
+import { installPakUpload } from "./pak-upload.js";
 import { readSessionParams, startWebRtcSession } from "./webrtc-session.js";
 import {
   createWebAppServerHost,
@@ -716,6 +718,10 @@ async function createMountedFilesystem(): Promise<VirtualFilesystem> {
 
   const filesystem = createVirtualFilesystem();
   looseVideos.set("pak0.pak", pakBytes);
+  // Player-supplied retail data, mounted after the demo pak so it wins.
+  for (const [name, bytes] of await listUploadedPaks()) {
+    looseVideos.set(name, bytes);
+  }
   FS_AddGameDirectory(filesystem, "baseq2", looseVideos);
   return filesystem;
 }

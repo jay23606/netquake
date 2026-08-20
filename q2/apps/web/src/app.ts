@@ -8,3 +8,7 @@
  */
 
 import "./app-runtime.js";
+import { installPakUpload } from "./pak-upload.js";
+
+// Lets a player add their own Quake II data; the site ships only the demo pak.
+void installPakUpload();
