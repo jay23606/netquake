@@ -183,6 +183,7 @@
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSupabaseRoomStore } from '../../../stores/supabaseRoom'
+import { useGameStore } from '../../../stores/game'
 import {
   playerCount, hostName, subscribeRooms, leaveRoomOnUnload,
   defaultGameSettings, hasExistingSession,
@@ -191,6 +192,7 @@ import {
 
 const router = useRouter()
 const store = useSupabaseRoomStore()
+const gameStore = useGameStore()
 
 
 // Remembered between visits so a returning player is not re-asked for the same
@@ -278,6 +280,11 @@ const signIn = () => run(async () => {
   const chosen = name.value || 'player'
   await store.signIn(chosen)
   savePrefs({ name: chosen })
+  // The header profile and the Quake 1 engine both read the name from autoexec.
+  // Without this the lobby identity and the in-game name drift apart.
+  if (gameStore.getAutoexecValue('name') !== chosen) {
+    gameStore.setAutoexecValue({ name: 'name', value: chosen })
+  }
   await refresh()
   watchRooms()
 })
