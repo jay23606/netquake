@@ -442,20 +442,13 @@ async function bootstrap(): Promise<void> {
     const runtime = createWebAppRuntime(filesystem, page);
     page.status.textContent = "Initialisation du renderer frontend...";
     await ensureWebAppFrontendRenderer(runtime, page);
-    // A desktop with a mouse always reports a fine pointer; Windows precision
-    // touchpads report touch points and can report a coarse pointer too, so
-    // that pair is not a reliable test. Attach only where no fine pointer
-    // exists at all -- a phone or tablet.
-    const isTouchDevice = navigator.maxTouchPoints > 0
-      && !window.matchMedia("(any-pointer: fine)").matches;
-    console.log("[q2-touch]", JSON.stringify({
-      maxTouchPoints: navigator.maxTouchPoints,
-      anyPointerFine: window.matchMedia("(any-pointer: fine)").matches,
-      pointerCoarse: window.matchMedia("(pointer: coarse)").matches,
-      attaching: isTouchDevice
-    }));
-    runtime.mobileControls = isTouchDevice
-      ? attachMobileTouchControls({
+    // Pointer media queries cannot detect touch here: these desktops report
+    // maxTouchPoints 1 with any-pointer:fine false, which is indistinguishable
+    // from a tablet. Attach on the first real touch instead -- a mouse never
+    // fires touchstart, so nothing appears unless someone actually touches.
+    const attachTouchControls = (): void => {
+      if (runtime.mobileControls) return;
+      runtime.mobileControls = attachMobileTouchControls({
       root: page.root,
       isGameplayActive: () => runtime.mode === "game"
         && runtime.menu.keys.state.key_dest === keydest_t.key_game
@@ -481,8 +474,9 @@ async function bootstrap(): Promise<void> {
       onInteract: () => {
         void runtime.audio.unlock();
       }
-    })
-      : null;
+    });
+    };
+    window.addEventListener("touchstart", attachTouchControls, { once: true, passive: true });
     void runtime.audio.unlock();
 
     resizeCanvas(page);
@@ -1671,9 +1665,14 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
       globals: qcommonGlobals
     });
   };
+  // A local server is not required to draw. A client connected to a remote
+  // host is just as ready, and demanding a local map is why a joining player
+  // saw only black: drawGameFrame returned before it ever built a renderer.
+  // ca_active plus refresh_prepped already means this client has a game to
+  // draw, however it got there, so this is strictly more permissive than the
+  // local-server test it replaces.
   const authoritativeGameReady = (): boolean => (
-    (serverHost.hasActiveGameMap() || serverHost.hasActiveAttractLoop())
-    && client.cls.state === connstate_t.ca_active
+    client.cls.state === connstate_t.ca_active
     && client.cl.refresh_prepped
   );
   const markAuthoritativeGameActive = (): void => {
