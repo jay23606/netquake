@@ -1,6 +1,6 @@
 import { RealtimeChannel } from '@supabase/supabase-js'
 import { EventEmitter } from '../../shared/eventEmitter'
-import { IWebRTCBroker, MessageEvents } from '../../shared/webrtc/IWebRTCBroker'
+import type { IWebRTCBroker, MessageEvents } from '../../shared/webrtc/IWebRTCBroker'
 import { getSupabase, iceServers } from '../../shared/supabase/client'
 
 // The lobby constructs this broker before the engine boots, so it cannot use the
@@ -185,10 +185,16 @@ export class SupabaseBroker
 			return
 		}
 		this.log(`sending ${type} to ${to ?? 'room'}\n`)
+		// Built conditionally: `data` is optional on Signal, and an explicit
+		// undefined is not the same as an absent property under strict optional
+		// property checking.
+		const payload: Signal = data === undefined
+			? { type, from: this.playerId, to }
+			: { type, from: this.playerId, to, data }
 		void this.channel.send({
 			type: 'broadcast',
 			event: SIGNAL_EVENT,
-			payload: { type, from: this.playerId, to, data } satisfies Signal,
+			payload,
 		})
 	}
 

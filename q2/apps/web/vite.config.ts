@@ -2,6 +2,16 @@ import { resolve } from "node:path";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  // Env comes from the repository root so this build sees the same
+  // VITE_SUPABASE_* values as the Quake 1 client.
+  envDir: resolve(__dirname, "../../.."),
+  resolve: {
+    alias: {
+      // The Supabase lobby and signaling code is framework-free and shared
+      // with the Quake 1 client rather than duplicated here.
+      "@nq": resolve(__dirname, "../../../src")
+    }
+  },
   // Relative so the build works wherever it is mounted -- here it is served
   // from <pages-site>/q2/, alongside the Quake 1 client at the root.
   base: "./",

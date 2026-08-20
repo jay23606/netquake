@@ -239,6 +239,8 @@ import { createWebSaveStorage, type WebSaveStorage } from "./web-save-storage.js
 import { registerWebConfigCommands } from "./web-config-commands.js";
 import { mapWebAppDomKey } from "./keymap.js";
 import { createWebAppLocalTransport } from "./local-transport.js";
+import { createWebRtcTransport, type WebRtcTransport } from "./webrtc-transport.js";
+import { readSessionParams, startWebRtcSession } from "./webrtc-session.js";
 import {
   createWebAppServerHost,
   type WebAppServerHost
@@ -1160,10 +1162,28 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
       onSetBinding: () => scheduleConfigAutosave()
     }
   });
-  const localTransport = createWebAppLocalTransport({
+  // Multiplayer arrives as ?room=&player=&host= from the lobby. Without those
+  // this is unchanged: a single-player loopback that never touches the network.
+  const rtcSession = readSessionParams();
+  const transportOptions = {
     now: () => client.cls.realtime,
     onPrint: printToConsole
-  });
+  };
+  const localTransport = rtcSession
+    ? createWebRtcTransport({
+        role: rtcSession.isHost ? "host" : "client",
+        ...transportOptions
+      })
+    : createWebAppLocalTransport(transportOptions);
+  if (rtcSession) {
+    void startWebRtcSession(rtcSession, localTransport as WebRtcTransport).catch(
+      (error: unknown) => {
+        printToConsole(
+          `multiplayer: ${error instanceof Error ? error.message : String(error)}\n`
+        );
+      }
+    );
+  }
   const fileExists = (path: string): boolean => readMountedFile(filesystem, path) !== undefined || saveStorage.exists(path);
   const loadBinaryFile = (path: string): Uint8Array | null => readMountedFile(filesystem, path)?.bytes ?? saveStorage.readBinary(path);
   const downloadFileHooks = createWebDownloadFileHooks(saveStorage);

@@ -7,6 +7,9 @@
     "verbatimModuleSyntax": true,
     "exactOptionalPropertyTypes": true,
     "skipLibCheck": true,
+    "paths": {
+      "@nq/*": ["../src/*"]
+    },
     "types": [
       "node"
     ]
