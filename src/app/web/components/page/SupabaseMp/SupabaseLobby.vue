@@ -14,10 +14,11 @@
       <p v-if="store.error" class="err">{{ store.error }}</p>
       <p v-if="store.playerId" class="muted whoami">
         Signed in as <strong>{{ store.playerName }}</strong>.
-        A second player must use a private window or another browser &mdash; two
-        normal windows share one session and count as the same player.
+        <button class="link" :disabled="busy" @click="changeName">change name</button>
+        <br />
+        A second player must be a different account &mdash; use "change name"
+        here, or a private window, or another browser.
       </p>
-
       <section v-if="!store.playerId" class="panel">
         <label>Player name</label>
         <input v-model="name" maxlength="15" placeholder="ranger" @keyup.enter="signIn" />
@@ -261,6 +262,16 @@ const run = async (fn: () => Promise<unknown>) => {
   try { await fn() } catch { /* surfaced via store.error */ } finally { busy.value = false }
 }
 
+
+// Ends the session so this browser can sign in as someone else. The remembered
+// name is cleared too, otherwise the auto sign-in would immediately restore the
+// player that was just signed out.
+const changeName = () => run(async () => {
+  await store.signOut()
+  savePrefs({ name: '' })
+  name.value = ''
+  openRooms.value = []
+})
 const refresh = async () => { openRooms.value = await store.list() }
 
 const signIn = () => run(async () => {

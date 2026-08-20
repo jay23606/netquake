@@ -384,3 +384,11 @@ export const hasExistingSession = async (): Promise<boolean> => {
 	const { data: { session } } = await getSupabase().auth.getSession()
 	return !!session
 }
+
+// Ends the session in this browser. The next sign-in mints a fresh anonymous
+// user, which is how a second player is created without a separate browser.
+export const signOutPlayer = async (): Promise<void> => {
+	if (!supabaseConfigured()) return
+	cachedAccessToken = null
+	await getSupabase().auth.signOut()
+}

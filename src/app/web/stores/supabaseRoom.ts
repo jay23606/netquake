@@ -42,6 +42,22 @@ export const useSupabaseRoomStore = defineStore('supabaseRoom', {
   },
 
   actions: {
+
+    // Ends the session so this browser can become a different player. Needed
+    // because auto sign-in otherwise leaves no way to change who you are.
+    async signOut() {
+      try {
+        if (this.room) await this.leave()
+      } finally {
+        await rooms.signOutPlayer()
+        this.playerId = null
+        this.playerName = ''
+        this.players = []
+        this.chat = []
+        this.error = null
+        this.status = 'idle'
+      }
+    },
     async signIn(name: string) {
       const player = await rooms.ensurePlayer(name)
       this.playerId = player.id
