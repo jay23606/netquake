@@ -5,10 +5,10 @@ header.flex.items-center.justify-between(class="px-6 md:px-12 h-12 xs:h-14")
     em= "."
     | IO
   nav.site-links(class="hidden md:flex gap-8")
-    router-link(:to="{name: 'singleplayer'}") Singleplayer
-    router-link(:to="{name: 'sb-multiplayer'}") Multiplayer
+    router-link(:to="{name: 'singleplayer'}") Quake 1
     a(:href="q2Url") Quake 2
-    router-link(:to="{name: 'setup'}") Setup
+    router-link(:to="{name: 'sb-multiplayer'}") Multiplayer
+    router-link(:to="{name: 'setup'}") Q1 Setup
   .flex.items-center.gap-1
     font-awesome-icon.pak1-icon.pak1-loaded(
       v-if="hasPak1"
@@ -29,10 +29,10 @@ header.flex.items-center.justify-between(class="px-6 md:px-12 h-12 xs:h-14")
     button.hamburger(class="flex md:hidden" @click="menuOpen = !menuOpen" aria-label="Menu") ☰
 
 div.mobile-menu.site-links(:class="{ open: menuOpen }")
-  router-link(:to="{name: 'singleplayer'}" @click="menuOpen = false") Singleplayer
-  router-link(:to="{name: 'sb-multiplayer'}" @click="menuOpen = false") Multiplayer
+  router-link(:to="{name: 'singleplayer'}" @click="menuOpen = false") Quake 1
   a(:href="q2Url" @click="menuOpen = false") Quake 2
-  router-link(:to="{name: 'setup'}" @click="menuOpen = false") Setup
+  router-link(:to="{name: 'sb-multiplayer'}" @click="menuOpen = false") Multiplayer
+  router-link(:to="{name: 'setup'}" @click="menuOpen = false") Q1 Setup
 </template>
 
 <script lang="ts" setup>
