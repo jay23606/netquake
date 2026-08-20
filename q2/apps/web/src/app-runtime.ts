@@ -1540,13 +1540,19 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
 
     const incomingAcknowledged = client.cls.netchan.incoming_acknowledged;
     const outgoingSequence = client.cls.netchan.outgoing_sequence;
+    // A joining client has no local server, so there is no collision world to
+    // predict against. Predicting without one walks the player through the
+    // floor and jitters as each snapshot yanks them back -- markedly worse than
+    // not predicting, which just costs a little input latency. Restoring
+    // prediction for remote clients means giving them a collision world built
+    // from their own copy of the map.
     const predictionCollision = serverHost.hasActiveGameMap()
       ? createClientPredictionCollisionSource(client, serverHost.collisionWorld)
       : undefined;
     CL_PredictMovement(client, {
       incomingAcknowledged,
       outgoingSequence,
-      predictMovement: true,
+      predictMovement: predictionCollision !== undefined,
       ...(predictionCollision ? { predictionCollision } : {})
     });
   };
