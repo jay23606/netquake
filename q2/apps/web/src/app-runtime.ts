@@ -58,6 +58,9 @@ import {
   AngleVectors,
   svc_ops_e,
   CM_InlineModel,
+  CM_LoadMap,
+  createCollisionModelRuntime,
+  type CollisionWorld,
   createCommandRuntime,
   createQcommonGlobals,
   createQcommonHostRuntime,
@@ -1244,9 +1247,12 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
       onPlayCdTrack: (track: number, looping: boolean) => {
         cdAudio.play(track, looping);
       },
-      inlineModel: (name: string) => activeServerHost?.hasActiveGameMap()
-        ? CM_InlineModel(activeServerHost.collisionWorld, name)
-        : null
+      // Brush models come from whichever collision world this client has: the
+      // local server's, or the one built from its own copy of the map.
+      inlineModel: (name: string) => {
+        const world = activeCollisionWorld();
+        return world ? CM_InlineModel(world, name) : null;
+      }
     };
     if (CL_PrepRefresh(client, options)) {
       clearWebAppLoadingPlaque(client);
@@ -1533,6 +1539,31 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
     }
   });
   activeServerHost = serverHost;
+  // A joining client has no local server, so nothing was providing collision
+  // for prediction -- the predicted player walked through the floor and shook
+  // as each snapshot corrected it. The client has the same map on disk, so it
+  // builds its own collision world from it. CM_LoadMap's clientload flag exists
+  // for exactly this: a collision world for a client that is not the server.
+  const clientCollisionRuntime = createCollisionModelRuntime();
+  let clientCollisionWorld: CollisionWorld | null = null;
+  let clientCollisionMapPath: string | null = null;
+
+  const ensureClientCollisionWorld = (): CollisionWorld | null => {
+    const mapPath = getWebAppServerMapPath(client);
+    if (!mapPath) return null;
+    if (clientCollisionWorld && clientCollisionMapPath === mapPath) {
+      return clientCollisionWorld;
+    }
+    const result = CM_LoadMap(clientCollisionRuntime, mapPath, true, (name) =>
+      readMountedFile(filesystem, name)?.bytes ?? undefined);
+    clientCollisionWorld = result.world;
+    clientCollisionMapPath = result.world ? mapPath : null;
+    return clientCollisionWorld;
+  };
+
+  const activeCollisionWorld = (): CollisionWorld | null =>
+    serverHost.hasActiveGameMap() ? serverHost.collisionWorld : ensureClientCollisionWorld();
+
   const predictAuthoritativeClientMovement = (): void => {
     if (serverHost.hasActiveAttractLoop()) {
       return;
@@ -1540,12 +1571,9 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
 
     const incomingAcknowledged = client.cls.netchan.incoming_acknowledged;
     const outgoingSequence = client.cls.netchan.outgoing_sequence;
-    // A joining client has no local server and so no collision world here, which
-    // lets the predicted player walk through the floor. Disabling prediction
-    // instead stopped movement altogether, so it stays on until the real fix:
-    // building the client a collision world from its own copy of the map.
-    const predictionCollision = serverHost.hasActiveGameMap()
-      ? createClientPredictionCollisionSource(client, serverHost.collisionWorld)
+    const collisionWorld = activeCollisionWorld();
+    const predictionCollision = collisionWorld
+      ? createClientPredictionCollisionSource(client, collisionWorld)
       : undefined;
     CL_PredictMovement(client, {
       incomingAcknowledged,
