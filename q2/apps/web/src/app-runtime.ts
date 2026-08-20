@@ -442,12 +442,12 @@ async function bootstrap(): Promise<void> {
     const runtime = createWebAppRuntime(filesystem, page);
     page.status.textContent = "Initialisation du renderer frontend...";
     await ensureWebAppFrontendRenderer(runtime, page);
-    // Touch controls are attached unconditionally upstream, with only their
-    // activity gated -- so on a desktop they appear the moment gameplay starts
-    // and their pointer handling throws InvalidStateError against a mouse.
-    // Attach them only where they are actually usable.
+    // A desktop with a mouse always reports a fine pointer; Windows precision
+    // touchpads report touch points and can report a coarse pointer too, so
+    // that pair is not a reliable test. Attach only where no fine pointer
+    // exists at all -- a phone or tablet.
     const isTouchDevice = navigator.maxTouchPoints > 0
-      && window.matchMedia("(pointer: coarse)").matches;
+      && !window.matchMedia("(any-pointer: fine)").matches;
     runtime.mobileControls = isTouchDevice
       ? attachMobileTouchControls({
       root: page.root,
@@ -972,7 +972,7 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
   const engineConsoleVerbose =
     new URLSearchParams(window.location.search).get("debug") === "1";
   const engineConsoleInteresting =
-    /connect|challenge|entered the game|Bad server|SpawnServer|SV_GameMap|InitGame|dropped|error|denied|full|password|version/i;
+    /connect|challenge|entered the game|Bad server|SpawnServer|SV_GameMap|InitGame|dropped|error|denied|full|password|version|renderer|indisponible|impossible|introuvable|echec|Couldn.t load|not found/i;
 
   const printToConsole = (line: string): void => {
     const trimmed = line.trimEnd();
