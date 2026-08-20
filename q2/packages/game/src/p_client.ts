@@ -984,7 +984,12 @@ export function PutClientInServer(
 
   resetClientTransientState(client);
   client.pers = saved;
-  if (client.pers.health <= 0) {
+  // Also re-init when the player has no weapon, not only when health has gone
+  // negative. A respawn that lands here without a weapon leaves pers.weapon
+  // unset, and gunindex below is only assigned from it -- so the player spawns
+  // with nothing to hold and nothing to fire. The same guard is already used by
+  // the savegame path further down this file.
+  if (client.pers.health <= 0 || !client.pers.weapon) {
     InitClientPersistant(client);
   }
   client.resp = resp;
