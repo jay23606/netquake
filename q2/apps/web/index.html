@@ -1,13 +1,46 @@
 <!doctype html>
-<html lang="fr">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="/favicon.ico" />
-    <title>Quake2JS</title>
+    <!-- Relative: this is served from a subpath, not the domain root. -->
+    <link rel="icon" href="./favicon.ico" />
+    <title>Quake II — NetQuake</title>
+    <style>
+      /* Way back to the rest of the site. "../" is the parent of /q2/, so it
+         holds wherever the site is mounted. Hidden while the pointer is locked
+         so it never sits over the game during play. */
+      .back-to-site {
+        position: fixed;
+        top: 10px;
+        left: 12px;
+        z-index: 9999;
+        font: 12px/1 system-ui, sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #cfcfcf;
+        background: rgba(0, 0, 0, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 3px;
+        padding: 6px 10px;
+        text-decoration: none;
+        opacity: 0.55;
+        transition: opacity 0.15s ease;
+      }
+      .back-to-site:hover { opacity: 1; }
+      body.pointer-locked .back-to-site { display: none; }
+    </style>
   </head>
   <body>
+    <a class="back-to-site" href="../">&larr; NetQuake</a>
     <div id="app"></div>
+    <script>
+      // The engine grabs the pointer to look around; the link would otherwise
+      // hang over the view for the whole match.
+      document.addEventListener("pointerlockchange", () => {
+        document.body.classList.toggle("pointer-locked", !!document.pointerLockElement);
+      });
+    </script>
     <script type="module" src="/src/app.ts"></script>
   </body>
 </html>
