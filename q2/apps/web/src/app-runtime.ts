@@ -951,11 +951,17 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
   let configBootstrapPending = true;
   let configAutosaveTimer: ReturnType<typeof setTimeout> | null = null;
   let writeConfigurationNow: () => boolean = () => false;
+  // Mirror the in-game console to devtools when ?debug=1 is present. The engine
+  // reports connection progress and failures only to its own console, which is
+  // unreadable while the menu is up -- but it also prints every precache, so
+  // this stays off unless asked for.
+  const engineConsoleToDevtools =
+    new URLSearchParams(window.location.search).get("debug") === "1";
+
   const printToConsole = (line: string): void => {
-    // Mirror the in-game console into devtools. The engine reports connection
-    // progress and failures ("Connecting to...", "Bad server address", map
-    // errors) only to its own console, which is invisible while the menu is up.
-    console.log("[q2-engine]", line.trimEnd());
+    if (engineConsoleToDevtools) {
+      console.log("[q2-engine]", line.trimEnd());
+    }
 
     if (shouldSuppressWebAppConsoleLine(line)) {
       return;
@@ -4150,7 +4156,22 @@ function handleKeyDown(event: KeyboardEvent, runtime: WebAppRuntime, page: WebAp
  * Category: Adapter
  * Purpose: Mirror the ported key destination into the web-app browser mode and status UI.
  */
+// A client that joins over the network reaches ca_active without anything
+// closing the menu: the engine forces it off only from menu actions and local
+// map loads, so a joining player ends up in the game with the menu still
+// holding input. Fires once on the transition, so a menu opened deliberately
+// mid-game is left alone.
+let wasClientActive = false;
+
 function syncWebAppKeyDestination(runtime: WebAppRuntime, page: WebAppPage): void {
+  const clientActive = runtime.client.cls.state === connstate_t.ca_active;
+  if (clientActive
+    && !wasClientActive
+    && (runtime.menu.keys.state.key_dest as keydest_t) === keydest_t.key_menu) {
+    M_ForceMenuOff(runtime.menu);
+  }
+  wasClientActive = clientActive;
+
   const keyDest = runtime.menu.keys.state.key_dest as keydest_t;
 
   if (keyDest === keydest_t.key_menu && runtime.mode === "game") {
