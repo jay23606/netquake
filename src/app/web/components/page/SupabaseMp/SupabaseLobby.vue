@@ -50,10 +50,10 @@
         <section class="panel">
           <h2>Host a game</h2>
           <input v-model="roomName" maxlength="30" placeholder="room name" />
-          <select v-model="game">
-            <option value="q1">Quake 1</option>
-            <option value="q2">Quake 2</option>
-          </select>
+          <div class="radios">
+            <label><input type="radio" value="q1" v-model="game" /> Quake 1</label>
+            <label><input type="radio" value="q2" v-model="game" /> Quake 2</label>
+          </div>
           <select v-model="map">
             <option v-for="m in maps" :key="m" :value="m">{{ m }}</option>
           </select>
@@ -110,10 +110,16 @@
                 </select>
               </label>
               <label>Mode
-                <select v-model="settings.gameType" @change="saveSettings">
-                  <option value="deathmatch">Deathmatch</option>
-                  <option value="coop">Co-op</option>
-                </select>
+                <span class="radios inline">
+                  <label>
+                    <input type="radio" value="deathmatch" v-model="settings.gameType"
+                      @change="saveSettings" /> Deathmatch
+                  </label>
+                  <label>
+                    <input type="radio" value="coop" v-model="settings.gameType"
+                      @change="saveSettings" /> Co-op
+                  </label>
+                </span>
               </label>
               <label>Frag limit
                 <input type="number" min="0" max="200" v-model.number="settings.fragLimit"
@@ -307,6 +313,8 @@ const enterGame = () => {
       room: room.id,
       player: store.playerId ?? '',
       host: store.isHost ? '1' : '0',
+      map: room.map,
+      max: String(room.max_players),
     })
     window.location.href = `${import.meta.env.BASE_URL}q2/?${q.toString()}`
     return
@@ -394,4 +402,12 @@ onUnmounted(() => {
 button { padding: 6px 14px; cursor: pointer; }
 button.link { background: none; border: none; text-decoration: underline; padding: 0 4px; }
 ul { list-style: none; padding: 0; margin: 0; }
+.radios { display: flex; gap: 14px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+.radios.inline { margin: 0; display: inline-flex; }
+.radios label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.radios input { margin: 0; }
+/* Native dropdown popups render on a light background, so the inherited grey
+   was washed out and hard to read. */
+select, select option { color: #111; background: #fff; }
+select { border: 1px solid rgba(0, 0, 0, 0.35); }
 </style>

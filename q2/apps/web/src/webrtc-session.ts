@@ -15,6 +15,9 @@ export interface WebRtcSessionParams {
   roomId: string;
   playerId: string;
   isHost: boolean;
+  /** Map the host loads; ignored on the joining side, which is told by the server. */
+  map: string;
+  maxClients: number;
 }
 
 export interface WebRtcSession {
@@ -32,7 +35,13 @@ export function readSessionParams(
   const roomId = q.get("room");
   const playerId = q.get("player");
   if (!roomId || !playerId) return null;
-  return { roomId, playerId, isHost: q.get("host") === "1" };
+  return {
+    roomId,
+    playerId,
+    isHost: q.get("host") === "1",
+    map: q.get("map") ?? "demo1",
+    maxClients: Number(q.get("max") ?? "8")
+  };
 }
 
 // Quake's own netchan handles ordering and retransmission, so the channel must
@@ -43,11 +52,17 @@ const CHANNEL_CONFIG: RTCDataChannelInit = {
   maxRetransmits: 0
 };
 
+// Matches peerAddress(0) in the transport: the client side ignores the target
+// and always writes to the host channel, but the engine still needs a parseable
+// address to begin a connection.
+const HOST_ADDRESS = "10.77.0.0:27910";
+
 const log = (message: string): void => console.log("[q2-webrtc]", message);
 
 export async function startWebRtcSession(
   params: WebRtcSessionParams,
-  transport: WebRtcTransport
+  transport: WebRtcTransport,
+  runCommand: (text: string) => void
 ): Promise<WebRtcSession> {
   if (!supabaseConfigured()) {
     throw new Error("Supabase is not configured; multiplayer is unavailable.");
@@ -104,6 +119,9 @@ export async function startWebRtcSession(
       channel.addEventListener("open", () => {
         log("data channel to host open");
         transport.setHostChannel(channel);
+        // Nothing happens until the engine is told to connect; before the
+        // channel is open the packets would go nowhere.
+        runCommand("connect " + HOST_ADDRESS + "\n");
       });
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);

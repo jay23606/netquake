@@ -1176,7 +1176,9 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
       })
     : createWebAppLocalTransport(transportOptions);
   if (rtcSession) {
-    void startWebRtcSession(rtcSession, localTransport as WebRtcTransport).catch(
+    void startWebRtcSession(rtcSession, localTransport as WebRtcTransport, (text) =>
+      Cbuf_AddText(cmd, text)
+    ).catch(
       (error: unknown) => {
         printToConsole(
           `multiplayer: ${error instanceof Error ? error.message : String(error)}\n`
@@ -1796,6 +1798,14 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
     toggleWebAppConsoleContext(menu, consoleContext, page, client);
   });
   queueWebAppConfigBootstrap(cmd);
+  // Multiplayer: the engine otherwise boots to its main menu and waits. The
+  // host starts a listen server; the joining side connects instead, but only
+  // once its data channel is open (see webrtc-session).
+  if (rtcSession?.isHost) {
+    Cbuf_AddText(cmd, "set deathmatch 1\n");
+    Cbuf_AddText(cmd, `set maxclients ${rtcSession.maxClients}\n`);
+    Cbuf_AddText(cmd, `map ${rtcSession.map}\n`);
+  }
   const flushClientOutput = (): void => {
     while (client.output.length > 0) {
       const line = client.output.shift();
