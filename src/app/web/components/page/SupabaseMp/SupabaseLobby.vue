@@ -275,8 +275,13 @@ const watchRooms = () => {
 }
 
 const host = () => run(async () => {
-  savePrefs({ game: game.value, map: map.value })
-  await store.host(roomName.value || `${store.playerName}'s game`, map.value, game.value)
+  // The map must belong to the chosen game. The reset watcher runs on Vue's
+  // next tick, so a fast switch-then-host can still be holding the previous
+  // game's map here -- which would create a room nobody can load.
+  const chosenMap = maps.value.includes(map.value) ? map.value : maps.value[0]
+  map.value = chosenMap
+  savePrefs({ game: game.value, map: chosenMap })
+  await store.host(roomName.value || `${store.playerName}'s game`, chosenMap, game.value)
 })
 
 // Joining a match already in progress goes straight in: the status watcher only
