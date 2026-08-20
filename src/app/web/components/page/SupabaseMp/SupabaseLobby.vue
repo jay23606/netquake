@@ -233,7 +233,18 @@ const Q1_SHAREWARE_MAPS = [
 // created rooms a shareware player could never load. They appear only once this
 // browser has a copy of pak1 uploaded.
 const Q1_RETAIL_MAPS = ['dm1', 'dm2', 'dm3'] as const
+// LibreQuake's own levels, under the BSD licence, shipped as loose .bsp files
+// rather than a second game dir -- Quake embeds a map's textures in the BSP, so
+// each one is self-contained. They are deathmatch-only: they place hell
+// knights, whose model lives in pak1, and Quake removes monsters before
+// precaching only when deathmatch is set. Under coop they would fail to load.
+const Q1_LIBREQUAKE_MAPS = [
+  'lq_e0m1', 'lq_e0m2', 'lq_e0m3', 'lq_e0m4',
+  'lq_e0m5', 'lq_e0m6', 'lq_e0m7', 'lq_e0m8',
+] as const
 const Q2_MAPS = ['demo1', 'demo2', 'demo3'] as const
+
+const settings = reactive({ ...defaultGameSettings(), map: 'e1m1' })
 
 const game = ref<GameId>(prefs.game ?? 'q1')
 
@@ -243,7 +254,11 @@ const hasPak1 = computed(() =>
 
 const maps = computed<readonly string[]>(() => {
   if (game.value !== 'q1') return Q2_MAPS
-  return hasPak1.value ? [...Q1_SHAREWARE_MAPS, ...Q1_RETAIL_MAPS] : Q1_SHAREWARE_MAPS
+  return [
+    ...Q1_SHAREWARE_MAPS,
+    ...(hasPak1.value ? Q1_RETAIL_MAPS : []),
+    ...(settings.gameType === 'deathmatch' ? Q1_LIBREQUAKE_MAPS : []),
+  ]
 })
 
 // Switching engine must not leave an e1m1 selected for a Quake 2 room, which
@@ -252,6 +267,13 @@ const maps = computed<readonly string[]>(() => {
 // retail map they have since stopped supplying pak1 for.
 watch(maps, (available) => {
   if (!available.includes(map.value)) map.value = available[0]
+  // The in-room panel can change the mode after the map was chosen: switching a
+  // room to co-op drops the LibreQuake maps, which only load under deathmatch.
+  // Without this the room keeps a map nobody can load.
+  if (store.room && store.isHost && !available.includes(settings.map)) {
+    settings.map = available[0]
+    void saveSettings()
+  }
 }, { immediate: true })
 
 // Quake's 14 player colours, approximated for the lobby swatches.
@@ -261,7 +283,6 @@ const PALETTE = [
 ]
 const colorHex = (i: number) => PALETTE[i % PALETTE.length]
 
-const settings = reactive({ ...defaultGameSettings(), map: 'e1m1' })
 
 const count = (r: Room) => playerCount(r)
 const hostOf = (r: Room) => hostName(r)

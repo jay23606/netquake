@@ -1,3 +1,29 @@
 [
-  { "fileName": "id1/pak0.pak" }
+  {
+    "fileName": "id1/pak0.pak"
+  },
+  {
+    "fileName": "id1/maps/lq_e0m1.bsp"
+  },
+  {
+    "fileName": "id1/maps/lq_e0m2.bsp"
+  },
+  {
+    "fileName": "id1/maps/lq_e0m3.bsp"
+  },
+  {
+    "fileName": "id1/maps/lq_e0m4.bsp"
+  },
+  {
+    "fileName": "id1/maps/lq_e0m5.bsp"
+  },
+  {
+    "fileName": "id1/maps/lq_e0m6.bsp"
+  },
+  {
+    "fileName": "id1/maps/lq_e0m7.bsp"
+  },
+  {
+    "fileName": "id1/maps/lq_e0m8.bsp"
+  }
 ]

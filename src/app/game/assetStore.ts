@@ -264,7 +264,7 @@ const _loadFile = async (filename: string) : Promise<ArrayBuffer | null> => {
     // 
     // Joe - I think I figured it out - just ask the server for a file list..
     if (await checkRemoteFileList(search.dir, netpath)) {
-      const gotFile = await getFile('/' + netpath) as any;
+      const gotFile = await getFile(`${import.meta.env.BASE_URL}gamedata/${netpath}`) as any;
       if ((gotFile.status >= 200) && (gotFile.status <= 299))
       {
         sys.print('FindFile: ' + netpath + '\n');
@@ -282,7 +282,7 @@ const _loadFile = async (filename: string) : Promise<ArrayBuffer | null> => {
     for (i = com.state.searchpaths.length - 1; i >= 0; --i) {
       search = com.state.searchpaths[i];
       const netpath = search.dir + '/' + filename;
-      const gotFile = await getFile('/' + netpath) as any;
+      const gotFile = await getFile(`${import.meta.env.BASE_URL}gamedata/${netpath}`) as any;
       if ((gotFile.status >= 200) && (gotFile.status <= 299))
       {
         sys.print('FindFile: ' + netpath + '\n');
