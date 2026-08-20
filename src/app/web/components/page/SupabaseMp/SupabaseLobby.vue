@@ -179,16 +179,34 @@ import { useRouter } from 'vue-router'
 import { useSupabaseRoomStore } from '../../../stores/supabaseRoom'
 import {
   playerCount, hostName, subscribeRooms, leaveRoomOnUnload,
-  defaultGameSettings, type Room, type RoomPlayer, type ChatMessage, type GameId,
+  defaultGameSettings, hasExistingSession,
+  type Room, type RoomPlayer, type ChatMessage, type GameId,
 } from '../../../../../shared/supabase/rooms'
 
 const router = useRouter()
 const store = useSupabaseRoomStore()
 
-const name = ref('')
+
+// Remembered between visits so a returning player is not re-asked for the same
+// answers. Names only; nothing here identifies anyone across browsers.
+const PREFS_KEY = 'netquake.lobby.prefs'
+type Prefs = { name?: string, game?: GameId, map?: string }
+
+const loadPrefs = (): Prefs => {
+  try { return JSON.parse(localStorage.getItem(PREFS_KEY) ?? '{}') as Prefs }
+  catch { return {} }
+}
+
+const savePrefs = (patch: Prefs): void => {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify({ ...loadPrefs(), ...patch })) }
+  catch { /* private mode, or storage full: preferences are not worth failing over */ }
+}
+
+const prefs = loadPrefs()
+const name = ref(prefs.name ?? '')
 const roomName = ref('')
 const code = ref('')
-const map = ref('e1m1')
+const map = ref(prefs.map ?? 'e1m1')
 const busy = ref(false)
 const live = ref(false)
 const showCode = ref(false)
@@ -204,7 +222,7 @@ const MAPS_BY_GAME = {
   q2: ['demo1', 'demo2', 'demo3'],
 } as const
 
-const game = ref<GameId>('q1')
+const game = ref<GameId>(prefs.game ?? 'q1')
 const maps = computed<readonly string[]>(() => MAPS_BY_GAME[game.value])
 
 // Switching engine must not leave an e1m1 selected for a Quake 2 room, which
@@ -241,7 +259,9 @@ const run = async (fn: () => Promise<unknown>) => {
 const refresh = async () => { openRooms.value = await store.list() }
 
 const signIn = () => run(async () => {
-  await store.signIn(name.value || 'player')
+  const chosen = name.value || 'player'
+  await store.signIn(chosen)
+  savePrefs({ name: chosen })
   await refresh()
   watchRooms()
 })
@@ -255,6 +275,7 @@ const watchRooms = () => {
 }
 
 const host = () => run(async () => {
+  savePrefs({ game: game.value, map: map.value })
   await store.host(roomName.value || `${store.playerName}'s game`, map.value, game.value)
 })
 
@@ -316,6 +337,7 @@ const enterGame = () => {
       map: room.map,
       max: String(room.max_players),
     })
+    leavingForGame = true
     window.location.href = `${import.meta.env.BASE_URL}q2/?${q.toString()}`
     return
   }
@@ -326,7 +348,14 @@ const enterGame = () => {
 // including the host, so nobody has to press Start for themselves.
 const launch = () => run(() => store.launch())
 
+// Set just before a deliberate navigation into the game. Entering a Quake 2
+// match is a full page load, which fires beforeunload -- and the cleanup below
+// would then delete the host's row, which the schema trigger takes as the host
+// leaving and closes the room the instant it launches.
+let leavingForGame = false
+
 const onUnload = () => {
+  if (leavingForGame) return
   if (store.room && store.playerId) leaveRoomOnUnload(store.room.id, store.playerId)
 }
 
@@ -354,7 +383,19 @@ watch(() => store.chat.length, async () => {
 
 onMounted(() => {
   window.addEventListener('beforeunload', onUnload)
-  if (store.playerId) { void refresh(); watchRooms() }
+  if (store.playerId) { void refresh(); watchRooms(); return }
+  // A returning player already has a session in this browser, so re-asking for
+  // a name adds a step and nothing else. Only auto sign-in when a session
+  // exists: otherwise merely opening the page would mint an anonymous user.
+  void (async () => {
+    if (!store.available || !prefs.name) return
+    if (!(await hasExistingSession())) return
+    await run(async () => {
+      await store.signIn(prefs.name as string)
+      await refresh()
+      watchRooms()
+    })
+  })()
 })
 
 onUnmounted(() => {
@@ -410,4 +451,14 @@ ul { list-style: none; padding: 0; margin: 0; }
    was washed out and hard to read. */
 select, select option { color: #111; background: #fff; }
 select { border: 1px solid rgba(0, 0, 0, 0.35); }
+/* Same reasoning as the dropdowns: these render on a light field, where the
+   inherited grey was washed out. Placeholders stay lighter, but readable. */
+.panel input[type="text"],
+.panel input[type="number"],
+.panel input:not([type]) {
+  color: #111;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+.panel input::placeholder { color: #6b6b6b; opacity: 1; }
 </style>

@@ -1,4 +1,4 @@
-import { getSupabase } from './client'
+import { getSupabase, supabaseConfigured } from './client'
 import { SupabaseBroker } from '../../engine/webrtc/SupabaseBroker'
 
 // Lobby operations against the nq_* tables. Deliberately framework-free so the
@@ -374,4 +374,13 @@ export const findRoomById = async (roomId: string): Promise<Room | null> => {
 		.maybeSingle()
 	if (error) throw new Error(`Could not read room: ${error.message}`)
 	return (data as Room) ?? null
+}
+
+// True when this browser already holds a signed-in session. Used to skip the
+// name prompt for a returning player, without silently creating an anonymous
+// user for someone who has merely opened the page.
+export const hasExistingSession = async (): Promise<boolean> => {
+	if (!supabaseConfigured()) return false
+	const { data: { session } } = await getSupabase().auth.getSession()
+	return !!session
 }
