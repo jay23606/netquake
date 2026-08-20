@@ -951,17 +951,21 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
   let configBootstrapPending = true;
   let configAutosaveTimer: ReturnType<typeof setTimeout> | null = null;
   let writeConfigurationNow: () => boolean = () => false;
-  // Mirror the in-game console to devtools when ?debug=1 is present. The engine
-  // reports connection progress and failures only to its own console, which is
-  // unreadable while the menu is up -- but it also prints every precache, so
-  // this stays off unless asked for.
-  const engineConsoleToDevtools =
+  // Connection-relevant engine output is always mirrored to devtools: the
+  // engine reports progress and failures only to its own console, which cannot
+  // be read while the menu is up. ?debug=1 mirrors everything, including the
+  // precache list, which is far too noisy by default.
+  const engineConsoleVerbose =
     new URLSearchParams(window.location.search).get("debug") === "1";
+  const engineConsoleInteresting =
+    /connect|challenge|entered the game|Bad server|SpawnServer|SV_GameMap|InitGame|dropped|error|denied|full|password|version/i;
 
   const printToConsole = (line: string): void => {
-    if (engineConsoleToDevtools) {
-      console.log("[q2-engine]", line.trimEnd());
+    const trimmed = line.trimEnd();
+    if (engineConsoleVerbose || engineConsoleInteresting.test(trimmed)) {
+      console.log("[q2-engine]", trimmed);
     }
+
 
     if (shouldSuppressWebAppConsoleLine(line)) {
       return;

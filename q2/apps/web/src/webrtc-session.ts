@@ -8,7 +8,7 @@
  */
 
 import { SupabaseBroker } from "@nq/engine/webrtc/SupabaseBroker";
-import { iceServers, supabaseConfigured } from "@nq/shared/supabase/client";
+import { getSupabase, iceServers, supabaseConfigured } from "@nq/shared/supabase/client";
 import type { WebRtcTransport } from "./webrtc-transport.js";
 
 export interface WebRtcSessionParams {
@@ -161,17 +161,50 @@ export async function startWebRtcSession(
   });
 
   broker.on("peerLost", ({ clientId }) => {
+    const pc = connections.get(clientId);
+    // Presence can flap while a peer is perfectly healthy -- observed live, a
+    // leave arriving between two working handshakes. Tearing down a live peer
+    // connection on that signal drops a player mid-match, so a peer whose
+    // connection is up is left alone; connectionstatechange handles real loss.
+    if (pc && (pc.connectionState === "connected" || pc.connectionState === "connecting")) {
+      log(`ignoring presence leave for ${clientId}: connection is ${pc.connectionState}`);
+      return;
+    }
     transport.removePeer(clientId);
-    connections.get(clientId)?.close();
+    pc?.close();
     connections.delete(clientId);
   });
 
+
+  // Leaving the game -- back button, tab close, navigating away -- must remove
+  // this player from the room, or the room lingers with phantom occupants. The
+  // lobby does this for its own page; the game is a separate document and needs
+  // its own. A keepalive fetch is used because promises do not get to finish
+  // during unload.
+  const { data: { session } } = await getSupabase().auth.getSession();
+  const token = session?.access_token ?? null;
+  const onUnload = (): void => {
+    if (!token) return;
+    const base = import.meta.env.VITE_SUPABASE_URL;
+    const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
+    void fetch(
+      `${base}/rest/v1/nq_room_players?room_id=eq.${params.roomId}`
+        + `&player_id=eq.${params.playerId}`,
+      {
+        method: "DELETE",
+        keepalive: true,
+        headers: { apikey: key, Authorization: `Bearer ${token}` }
+      }
+    ).catch(() => { /* best effort */ });
+  };
+  window.addEventListener("beforeunload", onUnload);
   await broker.connect();
   broker.sendReady("0");
   log(`signaling up as ${params.isHost ? "host" : "client"} in room ${params.roomId}`);
 
   return {
     close: () => {
+      window.removeEventListener("beforeunload", onUnload);
       for (const pc of connections.values()) pc.close();
       connections.clear();
       broker.close();
