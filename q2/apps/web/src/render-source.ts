@@ -36,6 +36,8 @@ export interface WebAppServerRenderSourceOptions {
   cvar: CvarRuntime;
   predictMovement?: boolean;
   drawGun?: boolean;
+  /** Maps a clientinfo player model path to one that exists locally. */
+  resolvePlayerModelPath?: (path: string) => string;
 }
 
 /**
@@ -70,7 +72,10 @@ export function createWebAppServerRenderSource(
 ): WebAppRenderSource {
   const refreshFrame = CL_BuildRefreshFrame(runtime, {
     predictMovement: options.predictMovement ?? true,
-    drawGun: options.drawGun ?? true
+    drawGun: options.drawGun ?? true,
+    ...(options.resolvePlayerModelPath
+      ? { resolvePlayerModelPath: options.resolvePlayerModelPath }
+      : {})
   });
 
   return {

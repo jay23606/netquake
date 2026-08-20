@@ -214,7 +214,19 @@ export function CL_BuildRefreshFrame(
     }
 
     if (snapshot.modelindex !== 0) {
-      entities.push(createRenderEntity(snapshot, snapshot.modelindex, 0));
+      const rendered = createRenderEntity(snapshot, snapshot.modelindex, 0);
+      // A player entity carries modelindex 255, which is a sentinel meaning
+      // "use this client's model" rather than an index into the model list.
+      // Without resolving it the entity has no model and every other player is
+      // silently skipped -- invisible in any multiplayer game.
+      if (snapshot.customPlayerSkin) {
+        const info = runtime.cl.clientinfo[snapshot.skinnum & 0xff];
+        const path = info?.model_filename;
+        if (path) {
+          rendered.resolvedModelPath = options.resolvePlayerModelPath?.(path) ?? path;
+        }
+      }
+      entities.push(rendered);
 
       if ((snapshot.effects & EF_COLOR_SHELL) !== 0) {
         entities.push({

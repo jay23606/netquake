@@ -388,6 +388,8 @@ interface WebAppRuntime {
   shouldPumpAuthoritativeFrame: () => boolean;
   pumpAuthoritativeFrame: (milliseconds: number) => void;
   authoritativeGameReady: () => boolean;
+  /** Maps a player model path to one present in the mounted data. */
+  resolveModelPath: (path: string) => string;
   markAuthoritativeGameActive: () => void;
   consoleRenderedInThree: boolean;
 }
@@ -2044,6 +2046,7 @@ function createWebAppRuntime(filesystem: VirtualFilesystem, page: WebAppPage): W
     shouldPumpAuthoritativeFrame,
     pumpAuthoritativeFrame,
     authoritativeGameReady,
+    resolveModelPath,
     markAuthoritativeGameActive
   };
 }
@@ -3189,7 +3192,8 @@ function drawGameFrame(runtime: WebAppRuntime, page: WebAppPage, deltaSeconds: n
   page.status.style.display = "none";
   const source = createWebAppServerRenderSource(runtime.client, {
     cvar: runtime.menu.cvar,
-    predictMovement: !runtime.serverHost.hasActiveAttractLoop()
+    predictMovement: !runtime.serverHost.hasActiveAttractLoop(),
+    resolvePlayerModelPath: runtime.resolveModelPath
   });
   syncThreeCameraToRefresh(renderer.camera, source.refreshFrame);
   const consoleCanvas = runtime.menu.keys.state.key_dest === keydest_t.key_console

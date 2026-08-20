@@ -120,6 +120,8 @@ export interface ClientViewOptions {
   drawGun?: boolean;
   gunFrameOverride?: number;
   gunModelOverride?: string | null;
+  /** Maps a clientinfo player model path to one that exists locally. */
+  resolvePlayerModelPath?: (path: string) => string;
 }
 
 /**
