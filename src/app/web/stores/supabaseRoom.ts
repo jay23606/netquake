@@ -80,6 +80,16 @@ export const useSupabaseRoomStore = defineStore('supabaseRoom', {
       this.error = null
       try {
         if (!this.playerId) throw new Error("Not signed in")
+        // Two windows of the same browser share one auth session, so the second
+        // is the same player. Signaling then discards the other window's
+        // messages as its own echo and no connection is ever made -- a failure
+        // with no visible cause, so it is refused up front instead.
+        if (room.host_id === this.playerId) {
+          throw new Error(
+            'You are already the host of this room. A second player needs a '
+            + 'separate browser session: open a private/incognito window, or a '
+            + 'different browser.')
+        }
         await rooms.joinRoom(room.id, this.playerId)
         this.room = room
         activeBroker = await rooms.connectBroker(room.id, this.playerId, false)

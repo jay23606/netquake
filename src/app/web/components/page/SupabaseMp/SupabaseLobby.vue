@@ -12,6 +12,11 @@
 
     <template v-else>
       <p v-if="store.error" class="err">{{ store.error }}</p>
+      <p v-if="store.playerId" class="muted whoami">
+        Signed in as <strong>{{ store.playerName }}</strong>.
+        A second player must use a private window or another browser &mdash; two
+        normal windows share one session and count as the same player.
+      </p>
 
       <section v-if="!store.playerId" class="panel">
         <label>Player name</label>
