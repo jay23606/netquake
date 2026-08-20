@@ -7,6 +7,7 @@ header.flex.items-center.justify-between(class="px-6 md:px-12 h-12 xs:h-14")
   nav.site-links(class="hidden md:flex gap-8")
     router-link(:to="{name: 'singleplayer'}") Singleplayer
     router-link(:to="{name: 'sb-multiplayer'}") Multiplayer
+    a(:href="q2Url") Quake 2
     router-link(:to="{name: 'setup'}") Setup
   .flex.items-center.gap-1
     font-awesome-icon.pak1-icon.pak1-loaded(
@@ -30,6 +31,7 @@ header.flex.items-center.justify-between(class="px-6 md:px-12 h-12 xs:h-14")
 div.mobile-menu.site-links(:class="{ open: menuOpen }")
   router-link(:to="{name: 'singleplayer'}" @click="menuOpen = false") Singleplayer
   router-link(:to="{name: 'sb-multiplayer'}" @click="menuOpen = false") Multiplayer
+  a(:href="q2Url" @click="menuOpen = false") Quake 2
   router-link(:to="{name: 'setup'}" @click="menuOpen = false") Setup
 </template>
 
@@ -40,6 +42,10 @@ import { useGameStore } from '../../stores/game'
 
 const menuOpen = ref(false)
 const gameStore = useGameStore()
+// Quake 2 is a separate application mounted alongside this one, so it is a
+// plain link rather than a route, resolved against the deploy's base path.
+const q2Url = computed(() => `${import.meta.env.BASE_URL}q2/`)
+
 const hasPak1 = computed(() =>
   gameStore.assetMetas.some(a => a.game === 'id1' && a.fileName.toLowerCase() === 'pak1.pak')
 )
