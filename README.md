@@ -189,9 +189,15 @@ npm install
 npm run build
 ```
 
-`npm install` pulls [foyer](https://github.com/jay23606/foyer) straight from
-git rather than npm. It commits its build output, so the install needs no
-lifecycle script and cannot half-succeed on a runner that declines to run one.
+Voice, and the lobby behind it, come from
+[foyer](https://github.com/jay23606/foyer), installed from npm as
+`@jay23606/foyer`. It was extracted from this repository after the same
+peer-to-peer plumbing had been written here a fourth time, and netquake is its
+first consumer.
+
+The range is `^0.5.0`, which below version 1.0 means patch releases only: npm
+treats a minor bump before 1.0 as breaking, so 0.6 and later arrive by widening
+the range deliberately rather than on their own.
 
 Quake 2 is a separate workspace and builds into the same output tree, after
 Quake 1, whose build empties it:
