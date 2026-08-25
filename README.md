@@ -27,7 +27,7 @@ kept in IndexedDB in your browser and never uploaded anywhere.
 | Shared lobby | working | working |
 | Deathmatch maps | 29 (9 shareware + 20 added) | 3 (demo) |
 | Voice chat | working | working |
-| Video chat | working | — |
+| Video chat | working | working |
 | Leaderboard | working | — |
 | End-of-match map vote | working | — |
 
@@ -94,10 +94,11 @@ players appear and leave over Realtime, with no refresh.
 - **Voice chat**, with a microphone toggle in both games and `M` as the
   keybind. Quake takes pointer lock while playing, so the button cannot be
   clicked mid-match — it is the status readout and the key does the work.
-- **Video chat** in Quake 1, on `V`. Tiles are deliberately small and never
+- **Video chat** in both games, on `V`. Tiles are deliberately small and never
   interactive: a mesh makes every sender upload one copy per player, so foyer
   scales the encoding down as the room fills, and a click landing on a tile was
-  meant for the game. Verified between a laptop and a phone.
+  meant for the game. Verified with real cameras between a laptop and a phone in
+  Quake 1; Quake 2 runs the same mesh behind the same control.
 - **A map vote when a match ends.** Four candidates rather than all
   twenty-nine, derived from the room and the map just played so every player
   computes the same ballot without anyone publishing it.
