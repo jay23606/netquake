@@ -40,7 +40,7 @@
     "vue-tippy": "^6.7.1",
     "vue-toastification": "^2.0.0-rc.5",
     "websocket": "^1.0.35",
-    "@jay23606/foyer": "github:jay23606/foyer"
+    "@jay23606/foyer": "github:jay23606/foyer#29e5acf80766698fecd535cbd52843b2b9defe49"
   },
   "devDependencies": {
     "@types/node": "^24.0.10",
