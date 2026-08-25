@@ -51,6 +51,27 @@
         padding: 6px 10px;
         cursor: pointer;
       }
+      .voice-row { display: flex; gap: 6px; justify-content: flex-end; }
+      /* Small on purpose: foyer scales the encoding to the number of players,
+         so a full server sends thumbnails and showing them large would only
+         magnify that. Never interactive -- a click here was meant for the game. */
+      .voice-tiles {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        justify-content: flex-end;
+        margin-top: 6px;
+        max-width: 330px;
+        pointer-events: none;
+      }
+      .voice-tiles video {
+        width: 104px;
+        height: 78px;
+        object-fit: cover;
+        background: #111;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 2px;
+      }
       .voice-control button.muted { opacity: 0.6; }
       .voice-control button.talking {
         color: #7ad17a;
