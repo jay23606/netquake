@@ -27,6 +27,7 @@ kept in IndexedDB in your browser and never uploaded anywhere.
 | Shared lobby | working | working |
 | Deathmatch maps | 29 (9 shareware + 20 added) | 3 (demo) |
 | Voice chat | working | working |
+| Video chat | working | — |
 | Leaderboard | working | — |
 | End-of-match map vote | working | — |
 
@@ -53,7 +54,7 @@ it — `getchallenge`, `connect`, configstrings, baselines, `entered the game`.
 | Signaling — SDP/ICE only | Supabase Realtime broadcast |
 | Game traffic | WebRTC data channel, peer to peer |
 | Game server | The host player's browser |
-| Voice chat | A second WebRTC mesh, via [foyer](https://github.com/jay23606/foyer) |
+| Voice and video | A second WebRTC mesh, via [foyer](https://github.com/jay23606/foyer) |
 
 **Game traffic never passes through Supabase.** Quake sends roughly 20 server
 snapshots per second per player; relaying that through a WebSocket service
@@ -93,6 +94,10 @@ players appear and leave over Realtime, with no refresh.
 - **Voice chat**, with a microphone toggle in both games and `M` as the
   keybind. Quake takes pointer lock while playing, so the button cannot be
   clicked mid-match — it is the status readout and the key does the work.
+- **Video chat** in Quake 1, on `V`. Tiles are deliberately small and never
+  interactive: a mesh makes every sender upload one copy per player, so foyer
+  scales the encoding down as the room fills, and a click landing on a tile was
+  meant for the game. Verified between a laptop and a phone.
 - **A map vote when a match ends.** Four candidates rather than all
   twenty-nine, derived from the room and the map just played so every player
   computes the same ballot without anyone publishing it.
@@ -233,7 +238,7 @@ GPL-2.0.
   by Karlos-fr, a TypeScript port of id Software's Quake II source. See
   `q2/VENDORED.md` for what was changed and left out.
 
-- **Voice chat** — [foyer](https://github.com/jay23606/foyer), MIT, which was
+- **Voice and video** — [foyer](https://github.com/jay23606/foyer), MIT, which was
   extracted from this repository after the same peer-to-peer plumbing had been
   written here a fourth time. netquake is its first consumer.
 
