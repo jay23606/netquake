@@ -26,6 +26,9 @@ kept in IndexedDB in your browser and never uploaded anywhere.
 | Peer-to-peer multiplayer | working | working |
 | Shared lobby | working | working |
 | Deathmatch maps | 29 (9 shareware + 20 added) | 3 (demo) |
+| Voice chat | working | working |
+| Leaderboard | working | — |
+| End-of-match map vote | working | — |
 
 Both engines are confirmed playing peer-to-peer between two browsers: anonymous
 sign-in, hosting and joining, SDP and ICE crossing a Supabase broadcast channel,
@@ -50,6 +53,7 @@ it — `getchallenge`, `connect`, configstrings, baselines, `entered the game`.
 | Signaling — SDP/ICE only | Supabase Realtime broadcast |
 | Game traffic | WebRTC data channel, peer to peer |
 | Game server | The host player's browser |
+| Voice chat | A second WebRTC mesh, via [foyer](https://github.com/jay23606/foyer) |
 
 **Game traffic never passes through Supabase.** Quake sends roughly 20 server
 snapshots per second per player; relaying that through a WebSocket service
@@ -86,6 +90,14 @@ players appear and leave over Realtime, with no refresh.
   frag limit, time limit, skill. These reach the engine as `+deathmatch`,
   `+coop`, `+skill`, `+fraglimit` and `+timelimit`.
 - Quitting a match returns to the room, so a group can play another round.
+- **Voice chat**, with a microphone toggle in both games and `M` as the
+  keybind. Quake takes pointer lock while playing, so the button cannot be
+  clicked mid-match — it is the status readout and the key does the work.
+- **A map vote when a match ends.** Four candidates rather than all
+  twenty-nine, derived from the room and the map just played so every player
+  computes the same ballot without anyone publishing it.
+- **A leaderboard.** Finished matches are recorded, so a result outlives the
+  session that produced it.
 
 Two normal windows of one browser share a session and count as the same player;
 use a private window, another browser, or the **change name** control.
@@ -177,6 +189,10 @@ npm install
 npm run build
 ```
 
+`npm install` pulls [foyer](https://github.com/jay23606/foyer) straight from
+git rather than npm. It commits its build output, so the install needs no
+lifecycle script and cannot half-succeed on a runner that declines to run one.
+
 Quake 2 is a separate workspace and builds into the same output tree, after
 Quake 1, whose build empties it:
 
@@ -210,6 +226,10 @@ GPL-2.0.
 - **Quake 2** — vendored from [Quake-2-JS](https://github.com/Karlos-fr/Quake-2-JS)
   by Karlos-fr, a TypeScript port of id Software's Quake II source. See
   `q2/VENDORED.md` for what was changed and left out.
+
+- **Voice chat** — [foyer](https://github.com/jay23606/foyer), MIT, which was
+  extracted from this repository after the same peer-to-peer plumbing had been
+  written here a fourth time. netquake is its first consumer.
 
 id Software released both engines under GPL-2.0; the game data is not covered
 by that licence and remains theirs.
