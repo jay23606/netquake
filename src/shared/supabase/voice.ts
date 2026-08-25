@@ -1,4 +1,4 @@
-import { createVoiceMesh, type VoiceMesh } from '@jay23606/foyer'
+import { createVoiceMesh, type VoiceMesh, type VoiceStatus } from '@jay23606/foyer'
 import { getSupabase, iceServers } from './client'
 
 // Voice chat, now provided by foyer.
@@ -35,9 +35,42 @@ export class VoiceChat {
 	get currentStatus() { return this.mesh.currentStatus }
 	get peerCount() { return this.mesh.peerCount }
 
+	get cameraOn() { return this.video }
+	private video = false
+
 	onStatus = (listener: Parameters<VoiceMesh['onStatus']>[0]) => this.mesh.onStatus(listener)
+	onStream = (listener: Parameters<VoiceMesh['onStream']>[0]) => this.mesh.onStream(listener)
+	onLeave = (listener: Parameters<VoiceMesh['onLeave']>[0]) => this.mesh.onLeave(listener)
+
 	start = () => this.mesh.start()
-	stop = () => { this.mesh.stop() }
+	stop = () => { this.video = false; this.mesh.stop() }
 	setMuted = (muted: boolean) => { this.mesh.setMuted(muted) }
 	toggleMuted = () => this.mesh.toggleMuted()
+
+	/**
+	 * Turns the camera on or off.
+	 *
+	 * foyer attaches tracks when a connection is built, deliberately, so that
+	 * nothing renegotiates mid-call. The cost is that adding a camera to a mesh
+	 * already carrying only voice means rebuilding it -- a reconnect of a second
+	 * or two. Muting still just flips a track; this is the one control that
+	 * cannot.
+	 *
+	 * Quality is not set here. foyer picks it from how many people are
+	 * listening, so two players get a decent picture and a full server gets
+	 * small tiles without anything here having an opinion.
+	 */
+	setCamera = async (on: boolean): Promise<VoiceStatus> => {
+		const wasMuted = this.mesh.muted
+		this.mesh.stop()
+		this.video = on
+		const status = await this.mesh.start(
+			on
+				? { audio: true, video: { width: { ideal: 320 }, height: { ideal: 240 } } }
+				: undefined
+		)
+		if (status === 'live') this.mesh.setMuted(wasMuted)
+		else this.video = false
+		return status
+	}
 }
