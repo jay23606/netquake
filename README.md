@@ -195,7 +195,7 @@ Voice, and the lobby behind it, come from
 peer-to-peer plumbing had been written here a fourth time, and netquake is its
 first consumer.
 
-The range is `^0.5.0`, which below version 1.0 means patch releases only: npm
+The range is `^0.6.0`, which below version 1.0 means patch releases only: npm
 treats a minor bump before 1.0 as breaking, so 0.6 and later arrive by widening
 the range deliberately rather than on their own.
 
