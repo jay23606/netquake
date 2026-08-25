@@ -25,6 +25,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.2.1",
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
     "@fortawesome/vue-fontawesome": "^3.0.2",
+    "@jay23606/foyer": "^0.5.0",
     "@progress/jszip-esm": "^1.0.4",
     "@roamhq/wrtc": "^0.8.0",
     "@supabase/supabase-js": "^2.112.3",
@@ -39,8 +40,7 @@
     "vue": "^3.5.17",
     "vue-tippy": "^6.7.1",
     "vue-toastification": "^2.0.0-rc.5",
-    "websocket": "^1.0.35",
-    "@jay23606/foyer": "github:jay23606/foyer#29e5acf80766698fecd535cbd52843b2b9defe49"
+    "websocket": "^1.0.35"
   },
   "devDependencies": {
     "@types/node": "^24.0.10",
