@@ -1,4 +1,4 @@
-import { createVoiceMesh, type VoiceMesh, type VoiceStatus } from '@jay23606/foyer'
+import { createMediaMesh, type MediaMesh, type MediaStatus } from '@jay23606/foyer'
 import { getSupabase, iceServers } from './client'
 
 // Voice chat, now provided by foyer.
@@ -17,13 +17,15 @@ import { getSupabase, iceServers } from './client'
 // unmute, why the offerer is settled by comparing ids -- now live in foyer's
 // voice.ts, next to the code they explain.
 
-export type { VoiceStatus, VoiceListener } from '@jay23606/foyer'
+export type { MediaStatus, MediaListener } from '@jay23606/foyer'
+// The old spellings, kept because this app's own components use them.
+export type { MediaStatus as VoiceStatus, MediaListener as VoiceListener } from '@jay23606/foyer'
 
 export class VoiceChat {
-	private readonly mesh: VoiceMesh
+	private readonly mesh: MediaMesh
 
 	constructor(roomId: string, playerId: string) {
-		this.mesh = createVoiceMesh({
+		this.mesh = createMediaMesh({
 			supabase: getSupabase(),
 			roomId,
 			playerId,
@@ -38,9 +40,9 @@ export class VoiceChat {
 	get cameraOn() { return this.video }
 	private video = false
 
-	onStatus = (listener: Parameters<VoiceMesh['onStatus']>[0]) => this.mesh.onStatus(listener)
-	onStream = (listener: Parameters<VoiceMesh['onStream']>[0]) => this.mesh.onStream(listener)
-	onLeave = (listener: Parameters<VoiceMesh['onLeave']>[0]) => this.mesh.onLeave(listener)
+	onStatus = (listener: Parameters<MediaMesh['onStatus']>[0]) => this.mesh.onStatus(listener)
+	onStream = (listener: Parameters<MediaMesh['onStream']>[0]) => this.mesh.onStream(listener)
+	onLeave = (listener: Parameters<MediaMesh['onLeave']>[0]) => this.mesh.onLeave(listener)
 
 	start = () => this.mesh.start()
 	stop = () => { this.video = false; this.mesh.stop() }
@@ -60,7 +62,7 @@ export class VoiceChat {
 	 * listening, so two players get a decent picture and a full server gets
 	 * small tiles without anything here having an opinion.
 	 */
-	setCamera = async (on: boolean): Promise<VoiceStatus> => {
+	setCamera = async (on: boolean): Promise<MediaStatus> => {
 		const wasMuted = this.mesh.muted
 		this.mesh.stop()
 		this.video = on
