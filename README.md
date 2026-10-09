@@ -117,6 +117,12 @@ use a private window, another browser, or the **change name** control.
   running a server.
 - A server browser fed by a master server — Supabase rooms replace it.
 
+### Legacy server files
+
+`Dockerfile.server` and `docker-compose.yml` come from the original WebQuake
+setup, which ran a dedicated WebRTC game server. Nothing in the Supabase
+multiplayer path uses them. Keep them only if you want that older server mode.
+
 ## Game data
 
 Only freely distributable data ships with this repository, and each pak was
